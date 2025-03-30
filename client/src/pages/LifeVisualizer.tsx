@@ -94,7 +94,16 @@ const formSchema = z.object({
       icon: z.string().optional(),
       color: z.string().optional()
     })
-  ).min(1, "At least one activity is required"),
+  )
+  .min(1, "At least one activity is required")
+  .refine(activities => {
+    // Calculate total hours spent on all activities
+    const totalHours = activities.reduce((total, activity) => total + activity.hours, 0);
+    return totalHours <= 24;
+  }, {
+    message: "Total time spent on activities cannot exceed 24 hours per day",
+    path: ["activities"] // This will display the error message under the activities field
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -300,6 +309,17 @@ const LifeVisualizer: React.FC = () => {
 
   // Visualize data
   const visualizeData = (data: FormData) => {
+    // Check if total activity hours exceed 24
+    const totalHours = data.activities.reduce((total, activity) => total + activity.hours, 0);
+    if (totalHours > 24) {
+      toast({
+        title: "Total hours exceed limit",
+        description: "The total time spent on activities cannot exceed 24 hours per day.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!lifeExpectancy && !useManualLifeExpectancy) {
       toast({
         title: "Life expectancy missing",
@@ -714,16 +734,35 @@ const LifeVisualizer: React.FC = () => {
                       <Label className="text-sm font-medium text-muted-foreground">
                         Daily Activities (hours)
                       </Label>
-                      <Button 
-                        type="button" 
-                        variant="link" 
-                        size="sm" 
-                        onClick={addActivity}
-                        className="text-primary p-0 h-auto"
-                      >
-                        <PlusCircle className="h-4 w-4 mr-1" />
-                        Add Custom
-                      </Button>
+                      <div className="flex items-center gap-3">
+                        {/* Hours Usage Indicator */}
+                        <div className="flex items-center gap-1 text-xs">
+                          <div className={`font-medium ${
+                            activities.reduce((sum, activity) => sum + activity.hours, 0) > 24 
+                              ? 'text-red-500' 
+                              : activities.reduce((sum, activity) => sum + activity.hours, 0) > 20
+                                ? 'text-amber-500'
+                                : 'text-green-500'
+                          }`}>
+                            {activities.reduce((sum, activity) => sum + activity.hours, 0).toFixed(1)}/24 hrs
+                          </div>
+                          <AlertCircle className={`h-3 w-3 ${
+                            activities.reduce((sum, activity) => sum + activity.hours, 0) > 24 
+                              ? 'text-red-500' 
+                              : 'hidden'
+                          }`} />
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          size="sm" 
+                          onClick={addActivity}
+                          className="text-primary p-0 h-auto"
+                        >
+                          <PlusCircle className="h-4 w-4 mr-1" />
+                          Add Custom
+                        </Button>
+                      </div>
                     </div>
                     
                     <div className="space-y-3">
