@@ -504,6 +504,7 @@ const LifeVisualizer: React.FC = () => {
                               type="date" 
                               {...field} 
                               max={new Date().toISOString().split('T')[0]}
+                              className="dark:text-white [&::-webkit-calendar-picker-indicator]:dark:filter [&::-webkit-calendar-picker-indicator]:dark:invert"
                             />
                           </FormControl>
                           <FormMessage />
@@ -633,7 +634,7 @@ const LifeVisualizer: React.FC = () => {
                             step="0.1"
                             className="w-full"
                           />
-                          <span className="text-sm">years</span>
+                          <span className="text-sm dark:text-gray-300">years</span>
                         </div>
                       )}
                     </div>
@@ -690,9 +691,9 @@ const LifeVisualizer: React.FC = () => {
                               onChange={(e) => {
                                 const newActivities = [...form.getValues('activities')];
                                 newActivities[index].hours = parseFloat(e.target.value) || 0;
-                                form.setValue('activities', newActivities);
+                                form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
                               }}
-                              className="text-center"
+                              className="text-center dark:text-white"
                             />
                           </div>
                           {index >= 3 && (
@@ -875,7 +876,7 @@ const LifeVisualizer: React.FC = () => {
                           if (commuteIndex >= 0) {
                             const updatedActivities = [...activities];
                             updatedActivities[commuteIndex].hours = commuteOptimization.reducedHours;
-                            form.setValue('activities', updatedActivities);
+                            form.setValue('activities', updatedActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
                             form.handleSubmit(visualizeData)();
                           }
                         }}>
