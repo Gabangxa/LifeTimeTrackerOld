@@ -125,6 +125,10 @@ const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: nu
     { 
       icon: 'fa-plane', 
       text: (years) => `${formatNumber(years * 365 * 0.5)} round-trip flights to the moon 🌙` 
+    },
+    { 
+      icon: 'fa-bed', 
+      text: (years) => `${formatNumber(years * 365)} complete hibernation cycles for a bear 🐻` 
     }
   ],
   'Work': [
@@ -135,6 +139,10 @@ const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: nu
     { 
       icon: 'fa-building', 
       text: (years) => `You could've built ${Math.floor(years / 4)} Fortune 500 companies 🏢` 
+    },
+    { 
+      icon: 'fa-rocket', 
+      text: (years) => `Could've launched ${Math.floor(years * 2)} successful startups 🚀` 
     }
   ],
   'Commute': [
@@ -145,6 +153,80 @@ const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: nu
     { 
       icon: 'fa-book', 
       text: (years) => `You could've read ${formatNumber(years * 500)} books 📚` 
+    },
+    { 
+      icon: 'fa-language', 
+      text: (years) => `Could've learned ${Math.floor(years / 1.5)} new languages fluently 🗣️` 
+    }
+  ],
+  'Exercise': [
+    { 
+      icon: 'fa-medal', 
+      text: (years) => `Could've trained for and completed ${Math.floor(years * 4)} marathons 🏃‍♂️` 
+    },
+    { 
+      icon: 'fa-heart', 
+      text: (years) => `Added approximately ${Math.floor(years * 2)} years to your lifespan ❤️` 
+    },
+    { 
+      icon: 'fa-dumbbell', 
+      text: (years) => `Lifted the equivalent of ${formatNumber(years * 1000)} elephants in weight 🐘` 
+    }
+  ],
+  'Social Media': [
+    { 
+      icon: 'fa-photo-film', 
+      text: (years) => `Scrolled through ${formatNumber(years * 365 * 1000)} posts 📱` 
+    },
+    { 
+      icon: 'fa-book-open', 
+      text: (years) => `Could've read ${formatNumber(years * 365)} novels instead 📖` 
+    },
+    { 
+      icon: 'fa-people-group', 
+      text: (years) => `Could've made ${Math.floor(years * 50)} meaningful friendships in person 👥` 
+    }
+  ],
+  'Cooking': [
+    { 
+      icon: 'fa-utensils', 
+      text: (years) => `Prepared approximately ${formatNumber(years * 365 * 2)} meals 🍽️` 
+    },
+    { 
+      icon: 'fa-hat-chef', 
+      text: (years) => `Equivalent to ${Math.floor(years / 4)} culinary degrees worth of practice 👨‍🍳` 
+    },
+    { 
+      icon: 'fa-wheat-awn', 
+      text: (years) => `Chopped enough vegetables to fill ${Math.floor(years * 52)} swimming pools 🥕` 
+    }
+  ],
+  'Reading': [
+    { 
+      icon: 'fa-book', 
+      text: (years) => `Read approximately ${formatNumber(years * 50)} books 📚` 
+    },
+    { 
+      icon: 'fa-brain', 
+      text: (years) => `Absorbed ${formatNumber(years * 5000000)} words of knowledge 🧠` 
+    },
+    { 
+      icon: 'fa-pen-fancy', 
+      text: (years) => `Could've written ${Math.floor(years / 3)} novels of your own ✍️` 
+    }
+  ],
+  'Gaming': [
+    { 
+      icon: 'fa-gamepad', 
+      text: (years) => `Completed roughly ${Math.floor(years * 50)} video game storylines 🎮` 
+    },
+    { 
+      icon: 'fa-trophy', 
+      text: (years) => `Earned approximately ${formatNumber(years * 1000)} gaming achievements 🏆` 
+    },
+    { 
+      icon: 'fa-code', 
+      text: (years) => `Could've learned to develop ${Math.floor(years / 2)} games yourself 💻` 
     }
   ]
 };
@@ -174,6 +256,22 @@ const GENERIC_COMPARISONS: Array<{icon: string, text: (years: number, activity: 
   {
     icon: 'fa-bicycle', 
     text: (years, activity) => `Could've biked ${formatNumber(years * 3650)} miles`
+  },
+  {
+    icon: 'fa-music', 
+    text: (years, activity) => `Could've listened to ${formatNumber(years * 8760)} music albums`
+  },
+  {
+    icon: 'fa-film', 
+    text: (years, activity) => `Could've watched ${formatNumber(years * 365 * 12)} movies`
+  },
+  {
+    icon: 'fa-tree', 
+    text: (years, activity) => `Could've planted ${formatNumber(years * 365)} trees`
+  },
+  {
+    icon: 'fa-pizza-slice', 
+    text: (years, activity) => `Could've eaten ${formatNumber(years * 365 * 2)} pizzas (not recommended!)`
   }
 ];
 
@@ -188,10 +286,10 @@ const generateDynamicComparisons = (activityName: string, years: number): Array<
   }
   
   // Otherwise, generate dynamic comparisons
-  // Pick 2 random comparisons from the generic list
+  // Pick 3 random comparisons from the generic list
   const randomIndices = Array.from(Array(GENERIC_COMPARISONS.length).keys())
     .sort(() => Math.random() - 0.5)
-    .slice(0, 2);
+    .slice(0, 3);
   
   return randomIndices.map(index => ({
     icon: GENERIC_COMPARISONS[index].icon,
