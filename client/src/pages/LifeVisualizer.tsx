@@ -298,7 +298,7 @@ const generateDynamicComparisons = (activityName: string, years: number): Array<
 };
 
 const LifeVisualizer: React.FC = () => {
-  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [darkMode, setDarkMode] = useState<boolean>(true);
   const [countries, setCountries] = useState<CountryInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [countriesLoading, setCountriesLoading] = useState<boolean>(true);
@@ -307,6 +307,11 @@ const LifeVisualizer: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [timelineSliderValue, setTimelineSliderValue] = useState<number>(0);
   const [projectedAge, setProjectedAge] = useState<number | null>(null);
+  
+  // Apply dark mode by default on initial render
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
 
   const pieChartRef = useRef<HTMLCanvasElement | null>(null);
   const pieChartInstance = useRef<Chart | null>(null);
