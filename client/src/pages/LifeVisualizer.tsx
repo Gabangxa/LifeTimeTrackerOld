@@ -43,6 +43,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Dialog, 
@@ -146,6 +147,8 @@ const LifeVisualizer: React.FC = () => {
   const [lifeExpectancy, setLifeExpectancy] = useState<number | null>(null);
   const [visualizeResult, setVisualizeResult] = useState<VisualizeResult | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [timelineSliderValue, setTimelineSliderValue] = useState<number>(0);
+  const [projectedAge, setProjectedAge] = useState<number | null>(null);
 
   const pieChartRef = useRef<HTMLCanvasElement | null>(null);
   const pieChartInstance = useRef<Chart | null>(null);
@@ -327,6 +330,10 @@ const LifeVisualizer: React.FC = () => {
         variant: "destructive",
       });
     } finally {
+      // Reset timeline slider
+      setTimelineSliderValue(0);
+      setProjectedAge(null);
+      
       setLoading(false);
     }
   };
@@ -756,31 +763,124 @@ const LifeVisualizer: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Remaining Time Timeline */}
+                  {/* Interactive Life Timeline Slider */}
                   <div className="flex flex-col">
                     <h3 className="text-lg font-semibold mb-4">Life Timeline</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
                       You have approximately <span className="font-semibold text-primary">{formatNumber(visualizeResult.weeksRemaining)} weeks</span> remaining in your life.
                     </p>
                     
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <div className="flex flex-wrap">
-                        {Array.from({ length: visualizeResult.weeksTotal }).map((_, i) => (
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                      {/* Timeline Visualization */}
+                      <div className="relative mb-8">
+                        {/* Life Progress Bar */}
+                        <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                           <div 
-                            key={i}
-                            className="inline-block w-2 h-2 m-[1px] rounded-sm"
+                            className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
                             style={{ 
-                              backgroundColor: i < visualizeResult.weeksLived 
-                                ? '#3B82F6' 
-                                : darkMode ? '#374151' : '#E5E7EB' 
+                              width: `${(visualizeResult.weeksLived / visualizeResult.weeksTotal) * 100}%`
                             }}
                           ></div>
-                        ))}
+                          
+                          {/* Future Projection Marker (only visible when slider is used) */}
+                          {timelineSliderValue > 0 && (
+                            <div 
+                              className="absolute top-0 h-4 w-1 bg-yellow-400 shadow-sm"
+                              style={{ 
+                                left: `${((visualizeResult.weeksLived + timelineSliderValue) / visualizeResult.weeksTotal) * 100}%`,
+                                transform: 'translateX(-50%)'
+                              }}
+                            ></div>
+                          )}
+                        </div>
+                        
+                        {/* Key Milestones */}
+                        <div className="flex justify-between mt-2">
+                          <div className="flex flex-col items-center">
+                            <div className="h-3 w-1 bg-gray-400 dark:bg-gray-500"></div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Birth</span>
+                          </div>
+                          
+                          <div 
+                            className="flex flex-col items-center"
+                            style={{ 
+                              position: 'absolute',
+                              left: `${(visualizeResult.weeksLived / visualizeResult.weeksTotal) * 100}%`,
+                              transform: 'translateX(-50%)'
+                            }}
+                          >
+                            <div className="h-4 w-2 bg-blue-600 -mt-4 z-10 rounded-sm"></div>
+                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1">Now ({visualizeResult.age.toFixed(1)} yrs)</span>
+                          </div>
+                          
+                          {/* Projected future age milestone (only visible when slider is used) */}
+                          {timelineSliderValue > 0 && projectedAge !== null && (
+                            <div 
+                              className="flex flex-col items-center"
+                              style={{ 
+                                position: 'absolute',
+                                left: `${((visualizeResult.weeksLived + timelineSliderValue) / visualizeResult.weeksTotal) * 100}%`,
+                                transform: 'translateX(-50%)'
+                              }}
+                            >
+                              <div className="h-3 w-2 bg-yellow-400 -mt-3 z-10 rounded-sm"></div>
+                              <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400 mt-1">Age {projectedAge.toFixed(1)}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex flex-col items-center">
+                            <div className="h-3 w-1 bg-gray-400 dark:bg-gray-500"></div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{visualizeResult.lifeExpectancy} years</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span>Birth</span>
-                        <span>Current Age</span>
-                        <span>Life Expectancy</span>
+                      
+                      {/* Interactive Slider */}
+                      <div className="mt-8">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                          Explore how time continues to pass:
+                        </p>
+                        <div className="flex items-center space-x-4">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Today</span>
+                          <Slider 
+                            defaultValue={[0]}
+                            max={visualizeResult.weeksRemaining}
+                            step={52} // Approximately 1 year
+                            className="flex-grow"
+                            onValueChange={(value) => {
+                              setTimelineSliderValue(value[0]);
+                              // Calculate projected age based on slider value
+                              const weeksAdvanced = value[0];
+                              
+                              // Reset projected age if slider is at 0
+                              if (weeksAdvanced === 0) {
+                                setProjectedAge(null);
+                              } else {
+                                const yearsAdvanced = weeksAdvanced / 52;
+                                const projectedAgeValue = visualizeResult.age + yearsAdvanced;
+                                setProjectedAge(projectedAgeValue);
+                              }
+                            }}
+                          />
+                          <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Life Expectancy</span>
+                        </div>
+                        <div className="mt-4 text-center space-y-2">
+                          {projectedAge !== null && timelineSliderValue > 0 ? (
+                            <div className="py-2 px-4 bg-blue-50 dark:bg-blue-900/20 rounded-md inline-block border border-blue-200 dark:border-blue-800">
+                              <span className="text-sm">
+                                At age <span className="font-bold text-primary">{projectedAge.toFixed(1)}</span>, you'll have
+                                <span className="font-bold text-primary ml-1">
+                                  {((visualizeResult.lifeExpectancy - projectedAge) * 365).toFixed(0)} days
+                                </span> remaining
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="py-2 px-4 bg-primary/10 dark:bg-primary/20 rounded-md inline-block">
+                              <span className="text-lg font-bold">{((visualizeResult.lifeExpectancy - visualizeResult.age) * 365).toFixed(0)}</span>
+                              <span className="ml-1 text-sm text-primary font-medium">days remaining</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
