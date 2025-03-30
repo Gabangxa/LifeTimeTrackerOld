@@ -165,6 +165,9 @@ const LifeVisualizer: React.FC = () => {
       activities: DEFAULT_ACTIVITIES,
     },
   });
+  
+  // Watch activities array to ensure UI updates when it changes
+  const activities = form.watch('activities');
 
   // Add manual life expectancy state
   const [manualLifeExpectancy, setManualLifeExpectancy] = useState<string>('');
@@ -217,9 +220,8 @@ const LifeVisualizer: React.FC = () => {
 
   // Add custom activity
   const addActivity = () => {
-    const currentActivities = form.getValues('activities');
     form.setValue('activities', [
-      ...currentActivities,
+      ...activities,
       { 
         id: uuidv4(), 
         name: '', 
@@ -232,8 +234,7 @@ const LifeVisualizer: React.FC = () => {
 
   // Remove activity
   const removeActivity = (id: string) => {
-    const currentActivities = form.getValues('activities');
-    form.setValue('activities', currentActivities.filter(activity => activity.id !== id));
+    form.setValue('activities', activities.filter(activity => activity.id !== id));
   };
 
   // Visualize data
@@ -447,7 +448,7 @@ const LifeVisualizer: React.FC = () => {
   const calculateCommuteOptimization = () => {
     if (!visualizeResult) return null;
     
-    const commuteActivity = form.getValues('activities').find(a => a.name.toLowerCase().includes('commute'));
+    const commuteActivity = activities.find(a => a.name.toLowerCase().includes('commute'));
     if (!commuteActivity) return null;
 
     const reducedCommute = Math.max(0, commuteActivity.hours - 0.5);
@@ -666,7 +667,7 @@ const LifeVisualizer: React.FC = () => {
                     </div>
                     
                     <div className="space-y-3">
-                      {form.getValues('activities').map((activity, index) => (
+                      {activities.map((activity, index) => (
                         <div key={activity.id} className="flex items-center space-x-2">
                           <div 
                             className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -679,7 +680,7 @@ const LifeVisualizer: React.FC = () => {
                               type="text"
                               value={activity.name}
                               onChange={(e) => {
-                                const newActivities = [...form.getValues('activities')];
+                                const newActivities = [...activities];
                                 newActivities[index].name = e.target.value;
                                 newActivities[index].icon = getActivityIcon(e.target.value);
                                 form.setValue('activities', newActivities);
@@ -696,7 +697,7 @@ const LifeVisualizer: React.FC = () => {
                               max="24"
                               value={activity.hours}
                               onChange={(e) => {
-                                const newActivities = [...form.getValues('activities')];
+                                const newActivities = [...activities];
                                 newActivities[index].hours = parseFloat(e.target.value) || 0;
                                 form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
                               }}
@@ -971,7 +972,6 @@ const LifeVisualizer: React.FC = () => {
                       </p>
                       <div className="mt-4 flex flex-wrap gap-4">
                         <Button onClick={() => {
-                          const activities = form.getValues('activities');
                           const commuteIndex = activities.findIndex(a => a.name.toLowerCase().includes('commute'));
                           if (commuteIndex >= 0) {
                             const updatedActivities = [...activities];
