@@ -611,7 +611,7 @@ const LifeVisualizer: React.FC = () => {
                               setManualLifeExpectancy(lifeExpectancy?.toString() || "");
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary"
                         />
                         <Label 
                           htmlFor="manual-life-expectancy"
@@ -677,7 +677,7 @@ const LifeVisualizer: React.FC = () => {
                                 form.setValue('activities', newActivities);
                               }}
                               placeholder="Activity name"
-                              className={index < 3 ? "bg-gray-50" : ""}
+                              className={index < 3 ? "bg-gray-50 dark:bg-gray-800" : ""}
                               readOnly={index < 3}
                             />
                           </div>
@@ -771,7 +771,7 @@ const LifeVisualizer: React.FC = () => {
                             style={{ 
                               backgroundColor: i < visualizeResult.weeksLived 
                                 ? '#3B82F6' 
-                                : '#E5E7EB' 
+                                : darkMode ? '#374151' : '#E5E7EB' 
                             }}
                           ></div>
                         ))}
