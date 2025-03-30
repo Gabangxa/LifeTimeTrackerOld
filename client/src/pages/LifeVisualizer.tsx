@@ -949,9 +949,14 @@ const LifeVisualizer: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Activity Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-              {visualizeResult.activityStats.slice(0, 3).map((activity) => (
+            {/* Activity Breakdown - Dynamically display all activities */}
+            <div className={`grid grid-cols-1 ${
+              visualizeResult.activityStats.length === 2 ? 'sm:grid-cols-2' : 
+              visualizeResult.activityStats.length === 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 
+              visualizeResult.activityStats.length === 4 ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 
+              visualizeResult.activityStats.length >= 5 ? 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : ''
+            } gap-6 mb-8`}>
+              {visualizeResult.activityStats.map((activity) => (
                 <Card key={activity.name} className="overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                   <div className="p-5" style={{ backgroundColor: `${activity.color}15` }}>
                     <div className="flex justify-between items-center">
@@ -1008,8 +1013,8 @@ const LifeVisualizer: React.FC = () => {
                   
                   <div>
                     <h3 className="text-lg font-medium mb-4">Time Remaining</h3>
-                    <div className="space-y-4">
-                      {visualizeResult.futureProjections.slice(0, 3).map((projection) => (
+                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                      {visualizeResult.futureProjections.map((projection) => (
                         <div key={projection.activity} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                           <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
                             {projection.activity}
@@ -1057,10 +1062,11 @@ const LifeVisualizer: React.FC = () => {
                                 updatedAt: new Date()
                               };
                               
-                              const response = await apiRequest('/life-data', {
-                                method: 'POST',
-                                body: JSON.stringify(saveData)
-                              });
+                              const response = await apiRequest(
+                                'POST',
+                                '/api/life-data',
+                                saveData
+                              );
                               
                               if (response) {
                                 toast({
