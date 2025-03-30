@@ -1055,11 +1055,11 @@ const LifeVisualizer: React.FC = () => {
                             try {
                               const saveData = {
                                 userId: null, // No user authentication implemented yet
-                                birthdate: new Date(form.getValues('birthdate')),
+                                birthdate: new Date(form.getValues('birthdate')).toISOString().split('T')[0],
                                 countryCode: form.getValues('country'),
                                 activities: JSON.stringify(form.getValues('activities')),
-                                createdAt: new Date(),
-                                updatedAt: new Date()
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
                               };
                               
                               const response = await apiRequest(
