@@ -73,6 +73,7 @@ import {
   getRandomColorHex,
   formatNumber
 } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 // Define form schema
 const formSchema = z.object({
@@ -1041,7 +1042,45 @@ const LifeVisualizer: React.FC = () => {
                         }}>
                           Recalculate with Changes
                         </Button>
-                        <Button variant="outline">
+                        <Button 
+                          variant="outline"
+                          onClick={async () => {
+                            if (!visualizeResult) return;
+                            
+                            try {
+                              const saveData = {
+                                userId: null, // No user authentication implemented yet
+                                birthdate: new Date(form.getValues('birthdate')),
+                                countryCode: form.getValues('country'),
+                                activities: JSON.stringify(form.getValues('activities')),
+                                createdAt: new Date(),
+                                updatedAt: new Date()
+                              };
+                              
+                              const response = await apiRequest('/life-data', {
+                                method: 'POST',
+                                body: JSON.stringify(saveData)
+                              });
+                              
+                              if (response) {
+                                toast({
+                                  title: "Analysis saved successfully",
+                                  description: "Your life data visualization has been saved.",
+                                  variant: "default",
+                                });
+                              } else {
+                                throw new Error("Failed to save analysis");
+                              }
+                            } catch (error: any) {
+                              console.error("Save error:", error);
+                              toast({
+                                title: "Failed to save analysis",
+                                description: error.message || "Please try again later.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
                           Save This Analysis
                         </Button>
                       </div>

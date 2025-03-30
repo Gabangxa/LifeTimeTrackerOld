@@ -1,7 +1,9 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { fetchCountries, fetchLifeExpectancy } from "./services/worldbank";
+import { insertUserLifeDataSchema } from "@shared/schema";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API route to get all countries
@@ -25,6 +27,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       res.status(500).json({ 
         message: `Failed to fetch life expectancy data: ${error.message}` 
+      });
+    }
+  });
+
+  // API route to save user life data
+  app.post('/api/life-data', async (req: Request, res: Response) => {
+    try {
+      // Validate request body
+      const validationResult = insertUserLifeDataSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({
+          message: 'Invalid data provided',
+          errors: validationResult.error.format()
+        });
+      }
+      
+      // Save the data
+      const savedData = await storage.saveUserLifeData(validationResult.data);
+      
+      res.status(201).json({
+        message: 'Life data saved successfully',
+        data: savedData
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: `Failed to save life data: ${error.message}`
+      });
+    }
+  });
+
+  // API route to get user life data by ID
+  app.get('/api/life-data/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          message: 'Invalid ID provided'
+        });
+      }
+      
+      const lifeData = await storage.getUserLifeData(id);
+      
+      if (!lifeData) {
+        return res.status(404).json({
+          message: 'Life data not found'
+        });
+      }
+      
+      res.json(lifeData);
+    } catch (error: any) {
+      res.status(500).json({
+        message: `Failed to fetch life data: ${error.message}`
       });
     }
   });
