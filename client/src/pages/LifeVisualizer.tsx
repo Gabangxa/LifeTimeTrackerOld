@@ -105,7 +105,7 @@ const DEFAULT_ACTIVITIES: ActivityData[] = [
   { id: uuidv4(), name: 'Commute', hours: 1, icon: 'fa-car', color: '#8B5CF6' },
 ];
 
-// Activity comparisons
+// Activity comparisons - predefined for default activities
 const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: number) => string}>> = {
   'Sleep': [
     { 
@@ -137,6 +137,56 @@ const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: nu
       text: (years) => `You could've read ${formatNumber(years * 500)} books 📚` 
     }
   ]
+};
+
+// Generic comparison generators for all activities
+const GENERIC_COMPARISONS: Array<{icon: string, text: (years: number, activity: string) => string}> = [
+  {
+    icon: 'fa-calendar-days', 
+    text: (years, activity) => `${formatNumber(years * 365)} days spent on ${activity.toLowerCase()}`
+  },
+  {
+    icon: 'fa-clock', 
+    text: (years, activity) => `${formatNumber(years * 365 * 24)} hours of ${activity.toLowerCase()}`
+  },
+  {
+    icon: 'fa-earth-americas', 
+    text: (years, activity) => `Could've traveled to ${Math.floor(years * 10)} countries instead`
+  },
+  {
+    icon: 'fa-graduation-cap', 
+    text: (years, activity) => `Could've earned ${Math.floor(years / 4)} college degrees`
+  },
+  {
+    icon: 'fa-code', 
+    text: (years, activity) => `Could've written ${formatNumber(years * 50000)} lines of code`
+  },
+  {
+    icon: 'fa-bicycle', 
+    text: (years, activity) => `Could've biked ${formatNumber(years * 3650)} miles`
+  }
+];
+
+// Function to generate dynamic comparisons for any activity
+const generateDynamicComparisons = (activityName: string, years: number): Array<{icon: string, text: string}> => {
+  // Use predefined comparisons if available
+  if (ACTIVITY_COMPARISONS[activityName]) {
+    return ACTIVITY_COMPARISONS[activityName].map(comp => ({
+      icon: comp.icon,
+      text: comp.text(years)
+    }));
+  }
+  
+  // Otherwise, generate dynamic comparisons
+  // Pick 2 random comparisons from the generic list
+  const randomIndices = Array.from(Array(GENERIC_COMPARISONS.length).keys())
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 2);
+  
+  return randomIndices.map(index => ({
+    icon: GENERIC_COMPARISONS[index].icon,
+    text: GENERIC_COMPARISONS[index].text(years, activityName)
+  }));
 };
 
 const LifeVisualizer: React.FC = () => {
@@ -220,6 +270,16 @@ const LifeVisualizer: React.FC = () => {
 
   // Add custom activity
   const addActivity = () => {
+    // Limit to maximum 5 activities total
+    if (activities.length >= 5) {
+      toast({
+        title: "Maximum activities reached",
+        description: "You can have a maximum of 5 activities. Remove an existing one to add a new activity.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     form.setValue('activities', [
       ...activities,
       { 
@@ -269,7 +329,9 @@ const LifeVisualizer: React.FC = () => {
       const activityStats: ActivityStat[] = data.activities.map(activity => {
         const years = calculateActivityYears(activity.hours, aliveDays);
         const percentage = (years / age) * 100;
-        const comparisons = ACTIVITY_COMPARISONS[activity.name] || [];
+        
+        // Use the dynamic comparisons generator for all activities
+        const dynamicComparisons = generateDynamicComparisons(activity.name, years);
         
         return {
           name: activity.name,
@@ -277,10 +339,7 @@ const LifeVisualizer: React.FC = () => {
           percentage,
           color: activity.color || getRandomColorHex(),
           icon: activity.icon || getActivityIcon(activity.name),
-          comparisons: comparisons.map(comp => ({
-            icon: comp.icon,
-            text: comp.text(years)
-          }))
+          comparisons: dynamicComparisons
         };
       });
 
