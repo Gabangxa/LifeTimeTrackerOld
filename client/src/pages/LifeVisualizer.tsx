@@ -290,6 +290,11 @@ const LifeVisualizer: React.FC = () => {
       return;
     }
     
+    // Assign specific colors based on activity count
+    // First additional activity (index 3) gets red, second (index 4) gets orange
+    const fixedColors = ['#D6293B', '#F7893B']; // Red and Orange
+    const colorIndex = activities.length - 3; // 0 for first custom activity, 1 for second
+    
     form.setValue('activities', [
       ...activities,
       { 
@@ -297,7 +302,7 @@ const LifeVisualizer: React.FC = () => {
         name: '', 
         hours: 1, 
         icon: 'fa-circle', 
-        color: getRandomColorHex() 
+        color: colorIndex >= 0 && colorIndex < fixedColors.length ? fixedColors[colorIndex] : getRandomColorHex()
       }
     ]);
   };
