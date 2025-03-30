@@ -51,7 +51,7 @@ import {
   DialogFooter, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
+  DialogTrigger
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { fetchCountries, fetchLifeExpectancy } from '@/services/WorldBankApi';
@@ -163,6 +163,10 @@ const LifeVisualizer: React.FC = () => {
     },
   });
 
+  // Add manual life expectancy state
+  const [manualLifeExpectancy, setManualLifeExpectancy] = useState<string>('');
+  const [useManualLifeExpectancy, setUseManualLifeExpectancy] = useState<boolean>(false);
+
   // Filter countries based on search term
   const filteredCountries = useMemo(() => {
     if (!searchTerm) return countries;
@@ -231,10 +235,21 @@ const LifeVisualizer: React.FC = () => {
 
   // Visualize data
   const visualizeData = (data: FormData) => {
-    if (!lifeExpectancy) {
+    if (!lifeExpectancy && !useManualLifeExpectancy) {
       toast({
         title: "Life expectancy missing",
-        description: "Please select a country to get life expectancy data.",
+        description: "Please select a country or enter life expectancy manually.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Use manual life expectancy if selected
+    const expectancy = useManualLifeExpectancy ? parseFloat(manualLifeExpectancy) : (lifeExpectancy || 0);
+    if (useManualLifeExpectancy && (!manualLifeExpectancy || isNaN(expectancy) || expectancy <= 0)) {
+      toast({
+        title: "Invalid life expectancy",
+        description: "Please enter a valid positive number for life expectancy.",
         variant: "destructive",
       });
       return;
@@ -265,13 +280,14 @@ const LifeVisualizer: React.FC = () => {
         };
       });
 
+      // Use the expectancy value we validated earlier
       const weeksLived = calculateLivedWeeks(birthdate);
-      const weeksTotal = calculateTotalWeeks(lifeExpectancy);
-      const weeksRemaining = calculateRemainingWeeks(birthdate, lifeExpectancy);
+      const weeksTotal = calculateTotalWeeks(expectancy);
+      const weeksRemaining = calculateRemainingWeeks(birthdate, expectancy);
 
       const futureProjections = data.activities.map(activity => {
         const yearsSoFar = calculateActivityYears(activity.hours, aliveDays);
-        const yearsRemaining = (activity.hours / 24) * 365 * (lifeExpectancy - age) / 365;
+        const yearsRemaining = (activity.hours / 24) * 365 * (expectancy - age) / 365;
         
         return {
           activity: activity.name,
@@ -287,12 +303,12 @@ const LifeVisualizer: React.FC = () => {
       futureProjections.push({
         activity: 'Free Time',
         yearsSoFar: calculateActivityYears(freeHoursDaily, aliveDays),
-        yearsRemaining: (freeHoursDaily / 24) * 365 * (lifeExpectancy - age) / 365
+        yearsRemaining: (freeHoursDaily / 24) * 365 * (expectancy - age) / 365
       });
 
       setVisualizeResult({
         age,
-        lifeExpectancy,
+        lifeExpectancy: expectancy,
         activityStats,
         weeksLived,
         weeksTotal,
@@ -553,6 +569,19 @@ const LifeVisualizer: React.FC = () => {
                                   type="button" 
                                   variant="secondary" 
                                   id="closeDialogBtn"
+                                  onClick={() => {
+                                    const dialog = document.querySelector('[data-state="open"]');
+                                    if (dialog) {
+                                      const closeEvent = new KeyboardEvent('keydown', {
+                                        key: 'Escape',
+                                        code: 'Escape',
+                                        keyCode: 27,
+                                        which: 27,
+                                        bubbles: true
+                                      });
+                                      dialog.dispatchEvent(closeEvent);
+                                    }
+                                  }}
                                 >
                                   Close
                                 </Button>
@@ -568,6 +597,46 @@ const LifeVisualizer: React.FC = () => {
                         </FormItem>
                       )}
                     />
+                    
+                    {/* Manual Life Expectancy */}
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="manual-life-expectancy"
+                          checked={useManualLifeExpectancy}
+                          onChange={(e) => {
+                            setUseManualLifeExpectancy(e.target.checked);
+                            if (e.target.checked) {
+                              setManualLifeExpectancy(lifeExpectancy?.toString() || "");
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <Label 
+                          htmlFor="manual-life-expectancy"
+                          className="text-sm font-medium"
+                        >
+                          Enter life expectancy manually
+                        </Label>
+                      </div>
+                      
+                      {useManualLifeExpectancy && (
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="number"
+                            value={manualLifeExpectancy}
+                            onChange={(e) => setManualLifeExpectancy(e.target.value)}
+                            placeholder="Enter life expectancy in years"
+                            min="1"
+                            max="150"
+                            step="0.1"
+                            className="w-full"
+                          />
+                          <span className="text-sm">years</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Activity Inputs */}
