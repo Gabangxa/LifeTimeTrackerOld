@@ -112,7 +112,7 @@ type FormData = z.infer<typeof formSchema>;
 const DEFAULT_ACTIVITIES: ActivityData[] = [
   { id: uuidv4(), name: 'Sleep', hours: 8, icon: 'fa-bed', color: '#3B82F6' },
   { id: uuidv4(), name: 'Work', hours: 8, icon: 'fa-briefcase', color: '#10B981' },
-  { id: uuidv4(), name: 'Commute', hours: 1, icon: 'fa-car', color: '#8B5CF6' },
+  { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#8B5CF6' },
 ];
 
 // Activity comparisons - predefined for default activities
@@ -370,13 +370,28 @@ const LifeVisualizer: React.FC = () => {
     
     try {
       const expectancy = await fetchLifeExpectancy(value);
+      
+      if (!expectancy) {
+        toast({
+          title: "No life expectancy data available",
+          description: "Data is not available for this country. Please use the manual life expectancy input instead.",
+          variant: "destructive",
+        });
+        // Toggle the manual life expectancy input
+        setUseManualLifeExpectancy(true);
+        setLifeExpectancy(null);
+        return;
+      }
+      
       setLifeExpectancy(expectancy);
     } catch (error) {
       toast({
         title: "Error fetching life expectancy",
-        description: "Please try again later.",
+        description: "Unable to retrieve data from World Bank API. Please use the manual life expectancy input instead.",
         variant: "destructive",
       });
+      // Toggle the manual life expectancy input
+      setUseManualLifeExpectancy(true);
       setLifeExpectancy(null);
     }
   };
@@ -632,19 +647,20 @@ const LifeVisualizer: React.FC = () => {
     }
   }, [visualizeResult]);
 
-  // Calculate commute optimization
-  const calculateCommuteOptimization = () => {
+  // Calculate exercise optimization
+  const calculateExerciseOptimization = () => {
     if (!visualizeResult) return null;
     
-    const commuteActivity = activities.find(a => a.name.toLowerCase().includes('commute'));
-    if (!commuteActivity) return null;
+    const exerciseActivity = activities.find(a => a.name.toLowerCase().includes('exercise'));
+    if (!exerciseActivity) return null;
 
-    const reducedCommute = Math.max(0, commuteActivity.hours - 0.5);
-    const yearsGained = (0.5 / 24) * 365 * (visualizeResult.lifeExpectancy - visualizeResult.age) / 365;
+    // If adding 30 min (0.5 hours) more exercise per day
+    const additionalExercise = exerciseActivity.hours + 0.5;
+    const yearsGained = (0.5 / 24) * 365 * (visualizeResult.lifeExpectancy - visualizeResult.age) / 365 * 2; // Exercise has double impact
     
     return {
       yearsGained: yearsGained.toFixed(1),
-      reducedHours: reducedCommute
+      increasedHours: additionalExercise
     };
   };
 
@@ -654,7 +670,7 @@ const LifeVisualizer: React.FC = () => {
     document.documentElement.classList.toggle('dark');
   };
 
-  const commuteOptimization = calculateCommuteOptimization();
+  const exerciseOptimization = calculateExerciseOptimization();
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
@@ -1175,19 +1191,19 @@ const LifeVisualizer: React.FC = () => {
                   </div>
                 </div>
                 
-                {commuteOptimization && (
+                {exerciseOptimization && (
                   <div className="mt-8">
-                    <h3 className="text-lg font-medium mb-4">Optimize Your Time</h3>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <h3 className="text-lg font-medium mb-4">Health Optimization</h3>
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                       <p className="text-sm">
-                        Reducing your daily commute by just <span className="font-semibold">30 minutes</span> would give you <span className="font-semibold">{commuteOptimization.yearsGained} extra years</span> of free time over your remaining life.
+                        Adding just <span className="font-semibold">30 minutes</span> more to your daily exercise routine could add <span className="font-semibold">{exerciseOptimization.yearsGained} extra years</span> to your life expectancy!
                       </p>
                       <div className="mt-4 flex flex-wrap gap-4">
                         <Button onClick={() => {
-                          const commuteIndex = activities.findIndex(a => a.name.toLowerCase().includes('commute'));
-                          if (commuteIndex >= 0) {
+                          const exerciseIndex = activities.findIndex(a => a.name.toLowerCase().includes('exercise'));
+                          if (exerciseIndex >= 0) {
                             const updatedActivities = [...activities];
-                            updatedActivities[commuteIndex].hours = commuteOptimization.reducedHours;
+                            updatedActivities[exerciseIndex].hours = exerciseOptimization.increasedHours;
                             form.setValue('activities', updatedActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
                             form.handleSubmit(visualizeData)();
                           }
