@@ -14,7 +14,8 @@ import {
   Mail,
   X,
   Search,
-  AlertCircle
+  AlertCircle,
+  ArrowUpRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -307,6 +308,11 @@ const LifeVisualizer: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [timelineSliderValue, setTimelineSliderValue] = useState<number>(0);
   const [projectedAge, setProjectedAge] = useState<number | null>(null);
+  const [projectedStats, setProjectedStats] = useState<{
+    activityStats: ActivityStat[];
+    futureProjections: VisualizeResult['futureProjections'];
+    daysRemaining: number;
+  } | null>(null);
   
   // Apply dark mode by default on initial render
   useEffect(() => {
@@ -430,6 +436,69 @@ const LifeVisualizer: React.FC = () => {
     form.setValue('activities', activities.filter(activity => activity.id !== id));
   };
 
+  // Calculate projected stats at a specific point in time
+  const calculateProjectedStats = (
+    formData: FormData, 
+    birthdate: Date, 
+    currentAge: number, 
+    expectancy: number, 
+    weeksAdvanced: number
+  ) => {
+    const yearsAdvanced = weeksAdvanced / 52;
+    const projectedAge = currentAge + yearsAdvanced;
+    
+    // Calculate new aliveDays (original + advancement)
+    const originalAliveDays = calculateAliveDays(birthdate);
+    const additionalDays = weeksAdvanced * 7;
+    const projectedAliveDays = originalAliveDays + additionalDays;
+    
+    // Calculate new activity stats
+    const activityStats: ActivityStat[] = formData.activities.map(activity => {
+      const years = calculateActivityYears(activity.hours, projectedAliveDays);
+      const percentage = (years / projectedAge) * 100;
+      
+      // Generate comparisons based on the new values
+      const dynamicComparisons = generateDynamicComparisons(activity.name, years);
+      
+      return {
+        name: activity.name,
+        years,
+        percentage,
+        color: activity.color || getRandomColorHex(),
+        icon: activity.icon || getActivityIcon(activity.name),
+        comparisons: dynamicComparisons
+      };
+    });
+
+    // Calculate future projections
+    const futureProjections = formData.activities.map(activity => {
+      const yearsSoFar = calculateActivityYears(activity.hours, projectedAliveDays);
+      const yearsRemaining = (activity.hours / 24) * 365 * (expectancy - projectedAge) / 365;
+      
+      return {
+        activity: activity.name,
+        yearsSoFar,
+        yearsRemaining
+      };
+    });
+
+    // Calculate free time
+    const dailyActivitiesHours = formData.activities.reduce((sum, activity) => sum + activity.hours, 0);
+    const freeHoursDaily = Math.max(0, 24 - dailyActivitiesHours);
+    
+    futureProjections.push({
+      activity: 'Free Time',
+      yearsSoFar: calculateActivityYears(freeHoursDaily, projectedAliveDays),
+      yearsRemaining: (freeHoursDaily / 24) * 365 * (expectancy - projectedAge) / 365
+    });
+
+    return {
+      activityStats,
+      futureProjections,
+      daysRemaining: Math.max(0, (expectancy - projectedAge) * 365)
+    };
+  };
+
   // Visualize data
   const visualizeData = (data: FormData) => {
     // Check if total activity hours exceed 24
@@ -523,6 +592,11 @@ const LifeVisualizer: React.FC = () => {
         futureProjections
       });
 
+      // Reset projected data
+      setTimelineSliderValue(0);
+      setProjectedAge(null);
+      setProjectedStats(null);
+
       // Scroll to results
       setTimeout(() => {
         document.getElementById('resultsContainer')?.scrollIntoView({ behavior: 'smooth' });
@@ -534,10 +608,6 @@ const LifeVisualizer: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      // Reset timeline slider
-      setTimelineSliderValue(0);
-      setProjectedAge(null);
-      
       setLoading(false);
     }
   };
@@ -1072,17 +1142,32 @@ const LifeVisualizer: React.FC = () => {
                             step={52} // Approximately 1 year
                             className="flex-grow"
                             onValueChange={(value) => {
-                              setTimelineSliderValue(value[0]);
-                              // Calculate projected age based on slider value
                               const weeksAdvanced = value[0];
+                              setTimelineSliderValue(weeksAdvanced);
                               
-                              // Reset projected age if slider is at 0
+                              // Reset projected data if slider is at 0
                               if (weeksAdvanced === 0) {
                                 setProjectedAge(null);
+                                setProjectedStats(null);
                               } else {
                                 const yearsAdvanced = weeksAdvanced / 52;
                                 const projectedAgeValue = visualizeResult.age + yearsAdvanced;
                                 setProjectedAge(projectedAgeValue);
+                                
+                                // Calculate and set the projected stats
+                                const birthdate = new Date(form.getValues('birthdate'));
+                                const formData = form.getValues();
+                                const expectancy = visualizeResult.lifeExpectancy;
+                                
+                                const stats = calculateProjectedStats(
+                                  formData,
+                                  birthdate,
+                                  visualizeResult.age,
+                                  expectancy,
+                                  weeksAdvanced
+                                );
+                                
+                                setProjectedStats(stats);
                               }
                             }}
                           />
@@ -1094,7 +1179,7 @@ const LifeVisualizer: React.FC = () => {
                               <span className="text-sm">
                                 At age <span className="font-bold text-primary">{projectedAge.toFixed(1)}</span>, you'll have
                                 <span className="font-bold text-primary ml-1">
-                                  {((visualizeResult.lifeExpectancy - projectedAge) * 365).toFixed(0)} days
+                                  {projectedStats ? projectedStats.daysRemaining.toFixed(0) : ((visualizeResult.lifeExpectancy - projectedAge) * 365).toFixed(0)} days
                                 </span> remaining
                               </span>
                             </div>
@@ -1119,7 +1204,8 @@ const LifeVisualizer: React.FC = () => {
               visualizeResult.activityStats.length === 4 ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 
               visualizeResult.activityStats.length >= 5 ? 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : ''
             } gap-6 mb-8`}>
-              {visualizeResult.activityStats.map((activity) => (
+              {/* Use projected stats when available, otherwise use original stats */}
+              {(projectedStats && timelineSliderValue > 0 ? projectedStats.activityStats : visualizeResult.activityStats).map((activity) => (
                 <Card key={activity.name} className="overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                   <div className="p-5" style={{ backgroundColor: `${activity.color}15` }}>
                     <div className="flex justify-between items-center">
@@ -1136,8 +1222,16 @@ const LifeVisualizer: React.FC = () => {
                     <div className="mt-2">
                       <p className="text-3xl font-bold">{activity.years.toFixed(1)} years</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {activity.percentage.toFixed(1)}% of your life so far
+                        {activity.percentage.toFixed(1)}% of your life 
+                        {projectedStats && timelineSliderValue > 0 ? " at this age" : " so far"}
                       </p>
+                      {/* Show change indicator if projecting into the future */}
+                      {projectedStats && timelineSliderValue > 0 && (
+                        <div className="mt-1 text-xs font-medium text-green-600 dark:text-green-500 flex items-center">
+                          <ArrowUpRight className="h-3 w-3 mr-1" />
+                          From {visualizeResult.activityStats.find(a => a.name === activity.name)?.years.toFixed(1) || "0"} years
+                        </div>
+                      )}
                     </div>
                   </div>
                   <CardContent>
@@ -1175,9 +1269,17 @@ const LifeVisualizer: React.FC = () => {
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Time Remaining</h3>
+                    <h3 className="text-lg font-medium mb-4">
+                      {projectedStats && timelineSliderValue > 0 ? 'Adjusted Time Remaining' : 'Time Remaining'}
+                      {projectedStats && timelineSliderValue > 0 && (
+                        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                          at age {projectedAge?.toFixed(1)}
+                        </span>
+                      )}
+                    </h3>
                     <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                      {visualizeResult.futureProjections.map((projection) => (
+                      {/* Use projected stats when available, otherwise use original stats */}
+                      {(projectedStats && timelineSliderValue > 0 ? projectedStats.futureProjections : visualizeResult.futureProjections).map((projection) => (
                         <div key={projection.activity} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                           <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
                             {projection.activity}
@@ -1185,6 +1287,12 @@ const LifeVisualizer: React.FC = () => {
                           <p className="text-xl font-semibold">
                             {projection.yearsRemaining.toFixed(1)} more years
                           </p>
+                          {/* Show change indicator if projecting into the future */}
+                          {projectedStats && timelineSliderValue > 0 && (
+                            <p className="text-xs mt-1 text-blue-600 dark:text-blue-400">
+                              {projection.yearsSoFar.toFixed(1)} years spent by this age
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
