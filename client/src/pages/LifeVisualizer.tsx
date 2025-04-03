@@ -1347,13 +1347,17 @@ const LifeVisualizer: React.FC = () => {
                             if (!visualizeResult) return;
                             
                             try {
+                              // Format dates correctly for PostgreSQL timestamp format
+                              const now = new Date();
+                              const formattedNow = now.toISOString().replace('T', ' ').split('.')[0];
+                              
                               const saveData = {
                                 userId: null, // No user authentication implemented yet
                                 birthdate: new Date(form.getValues('birthdate')).toISOString().split('T')[0],
                                 countryCode: form.getValues('country'),
                                 activities: JSON.stringify(form.getValues('activities')),
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString()
+                                createdAt: formattedNow,
+                                updatedAt: formattedNow
                               };
                               
                               const response = await apiRequest(
