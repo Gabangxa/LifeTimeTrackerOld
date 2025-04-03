@@ -612,110 +612,127 @@ const LifeVisualizer: React.FC = () => {
     }
   };
 
+  // Function to create or update the pie chart
+  const updatePieChart = (activityStats: ActivityStat[]) => {
+    if (!pieChartRef.current) return;
+    
+    if (pieChartInstance.current) {
+      pieChartInstance.current.destroy();
+    }
+    
+    const ctx = pieChartRef.current.getContext('2d');
+    if (!ctx) return;
+    
+    pieChartInstance.current = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: activityStats.map(a => a.name),
+        datasets: [{
+          data: activityStats.map(a => a.percentage),
+          backgroundColor: activityStats.map(a => a.color),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              boxWidth: 15,
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw as number || 0;
+                const years = activityStats[context.dataIndex].years;
+                return `${label}: ${value.toFixed(1)}% (${years.toFixed(1)} years)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  };
+  
+  // Function to create or update the projection chart
+  const updateProjectionChart = (projections: VisualizeResult['futureProjections']) => {
+    if (!projectionChartRef.current) return;
+    
+    if (projectionChartInstance.current) {
+      projectionChartInstance.current.destroy();
+    }
+    
+    const ctx = projectionChartRef.current.getContext('2d');
+    if (!ctx) return;
+    
+    projectionChartInstance.current = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: projections.map(p => p.activity),
+        datasets: [{
+          label: 'Years Spent So Far',
+          data: projections.map(p => p.yearsSoFar),
+          backgroundColor: '#3B82F6',
+          borderWidth: 0
+        }, {
+          label: 'Projected Remaining Years',
+          data: projections.map(p => p.yearsRemaining),
+          backgroundColor: '#10B981',
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            stacked: false,
+            grid: {
+              display: false
+            }
+          },
+          y: {
+            stacked: false,
+            title: {
+              display: true,
+              text: 'Years'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        }
+      }
+    });
+  };
+
   // Initialize/update charts when visualization result changes
   useEffect(() => {
     if (!visualizeResult) return;
 
-    // Initialize/update pie chart
-    if (pieChartRef.current) {
-      if (pieChartInstance.current) {
-        pieChartInstance.current.destroy();
-      }
-
-      const ctx = pieChartRef.current.getContext('2d');
-      if (ctx) {
-        pieChartInstance.current = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: visualizeResult.activityStats.map(a => a.name),
-            datasets: [{
-              data: visualizeResult.activityStats.map(a => a.percentage),
-              backgroundColor: visualizeResult.activityStats.map(a => a.color),
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'right',
-                labels: {
-                  boxWidth: 15,
-                  padding: 15,
-                  font: {
-                    size: 12
-                  }
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const label = context.label || '';
-                    const value = context.raw as number || 0;
-                    const years = visualizeResult.activityStats[context.dataIndex].years;
-                    return `${label}: ${value.toFixed(1)}% (${years.toFixed(1)} years)`;
-                  }
-                }
-              }
-            }
-          }
-        });
-      }
-    }
-
-    // Initialize/update projection chart
-    if (projectionChartRef.current) {
-      if (projectionChartInstance.current) {
-        projectionChartInstance.current.destroy();
-      }
-
-      const ctx = projectionChartRef.current.getContext('2d');
-      if (ctx) {
-        projectionChartInstance.current = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: visualizeResult.futureProjections.map(p => p.activity),
-            datasets: [{
-              label: 'Years Spent So Far',
-              data: visualizeResult.futureProjections.map(p => p.yearsSoFar),
-              backgroundColor: '#3B82F6',
-              borderWidth: 0
-            }, {
-              label: 'Projected Remaining Years',
-              data: visualizeResult.futureProjections.map(p => p.yearsRemaining),
-              backgroundColor: '#10B981',
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                stacked: false,
-                grid: {
-                  display: false
-                }
-              },
-              y: {
-                stacked: false,
-                title: {
-                  display: true,
-                  text: 'Years'
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                position: 'top'
-              }
-            }
-          }
-        });
-      }
-    }
+    // Initialize both charts with initial data
+    updatePieChart(visualizeResult.activityStats);
+    updateProjectionChart(visualizeResult.futureProjections);
   }, [visualizeResult]);
+  
+  // Update charts when projected stats change
+  useEffect(() => {
+    if (!projectedStats || timelineSliderValue === 0) return;
+    
+    // Update both charts with projected data
+    updatePieChart(projectedStats.activityStats);
+    updateProjectionChart(projectedStats.futureProjections);
+  }, [projectedStats, timelineSliderValue]);
 
   // Calculate exercise optimization
   const calculateExerciseOptimization = () => {
@@ -1149,6 +1166,12 @@ const LifeVisualizer: React.FC = () => {
                               if (weeksAdvanced === 0) {
                                 setProjectedAge(null);
                                 setProjectedStats(null);
+                                
+                                // Reset charts to initial state when slider is at 0
+                                if (visualizeResult) {
+                                  updatePieChart(visualizeResult.activityStats);
+                                  updateProjectionChart(visualizeResult.futureProjections);
+                                }
                               } else {
                                 const yearsAdvanced = weeksAdvanced / 52;
                                 const projectedAgeValue = visualizeResult.age + yearsAdvanced;
