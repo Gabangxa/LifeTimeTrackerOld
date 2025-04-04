@@ -1347,7 +1347,7 @@ const LifeVisualizer: React.FC = () => {
                             if (!visualizeResult) return;
                             
                             try {
-                              // Use Date objects directly for timestamp fields
+                              // Format dates as ISO strings for PostgreSQL compatibility
                               const now = new Date();
                               
                               const saveData = {
@@ -1355,8 +1355,8 @@ const LifeVisualizer: React.FC = () => {
                                 birthdate: new Date(form.getValues('birthdate')).toISOString().split('T')[0],
                                 countryCode: form.getValues('country'),
                                 activities: JSON.stringify(form.getValues('activities')),
-                                createdAt: now,
-                                updatedAt: now
+                                createdAt: now.toISOString(),
+                                updatedAt: now.toISOString()
                               };
                               
                               const response = await apiRequest(
