@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import Chart from 'chart.js/auto';
+import html2canvas from 'html2canvas';
 import { 
   Moon, 
   Sun, 
@@ -15,7 +16,8 @@ import {
   X,
   Search,
   AlertCircle,
-  ArrowUpRight
+  ArrowUpRight,
+  Share2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -313,6 +315,8 @@ const LifeVisualizer: React.FC = () => {
     futureProjections: VisualizeResult['futureProjections'];
     daysRemaining: number;
   } | null>(null);
+  const [isSharing, setIsSharing] = useState<boolean>(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
   
   // Apply dark mode by default on initial render
   useEffect(() => {
@@ -1052,7 +1056,7 @@ const LifeVisualizer: React.FC = () => {
         
         {/* Results Container */}
         {visualizeResult && (
-          <div id="resultsContainer">
+          <div id="resultsContainer" ref={resultsRef}>
             {/* Results Summary */}
             <Card className="mb-8">
               <CardContent className="pt-6">
@@ -1344,51 +1348,59 @@ const LifeVisualizer: React.FC = () => {
                         <Button 
                           variant="outline"
                           onClick={async () => {
-                            if (!visualizeResult) return;
+                            if (!visualizeResult || !resultsRef.current) return;
+                            
+                            setIsSharing(true);
                             
                             try {
-                              // Create date objects for timestamp fields
-                              const now = new Date();
+                              const canvas = await html2canvas(resultsRef.current, {
+                                backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                                allowTaint: true,
+                                useCORS: true,
+                                scale: 1.5 // Higher quality
+                              });
                               
-                              // For debugging
-                              console.log("Saving data with date format:", now);
-                              
-                              const saveData = {
-                                userId: null, // No user authentication implemented yet
-                                birthdate: new Date(form.getValues('birthdate')).toISOString().split('T')[0],
-                                countryCode: form.getValues('country'),
-                                activities: JSON.stringify(form.getValues('activities')),
-                                // Send actual Date objects for timestamp fields
-                                createdAt: now,
-                                updatedAt: now
-                              };
-                              
-                              const response = await apiRequest(
-                                'POST',
-                                '/api/life-data',
-                                saveData
-                              );
-                              
-                              if (response) {
+                              // Convert canvas to blob
+                              canvas.toBlob((blob) => {
+                                if (!blob) {
+                                  throw new Error("Failed to create image");
+                                }
+                                
+                                // Create download link
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.download = 'my-life-visualization.png';
+                                link.href = url;
+                                link.click();
+                                
+                                // Clean up
+                                URL.revokeObjectURL(url);
+                                
                                 toast({
-                                  title: "Analysis saved successfully",
-                                  description: "Your life data visualization has been saved.",
+                                  title: "Screenshot captured",
+                                  description: "Your life visualization has been downloaded as an image.",
                                   variant: "default",
                                 });
-                              } else {
-                                throw new Error("Failed to save analysis");
-                              }
+                              }, 'image/png');
                             } catch (error: any) {
-                              console.error("Save error:", error);
+                              console.error("Screenshot error:", error);
                               toast({
-                                title: "Failed to save analysis",
+                                title: "Failed to capture screenshot",
                                 description: error.message || "Please try again later.",
                                 variant: "destructive",
                               });
+                            } finally {
+                              setIsSharing(false);
                             }
                           }}
+                          disabled={isSharing}
                         >
-                          Save This Analysis
+                          {isSharing ? 'Capturing...' : (
+                            <>
+                              <Share2 className="w-4 h-4 mr-2" />
+                              Share Results
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
