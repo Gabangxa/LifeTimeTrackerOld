@@ -1347,16 +1347,20 @@ const LifeVisualizer: React.FC = () => {
                             if (!visualizeResult) return;
                             
                             try {
-                              // Format dates as ISO strings for PostgreSQL compatibility
+                              // Create date objects for timestamp fields
                               const now = new Date();
+                              
+                              // For debugging
+                              console.log("Saving data with date format:", now);
                               
                               const saveData = {
                                 userId: null, // No user authentication implemented yet
                                 birthdate: new Date(form.getValues('birthdate')).toISOString().split('T')[0],
                                 countryCode: form.getValues('country'),
                                 activities: JSON.stringify(form.getValues('activities')),
-                                createdAt: now.toISOString(),
-                                updatedAt: now.toISOString()
+                                // Send actual Date objects for timestamp fields
+                                createdAt: now,
+                                updatedAt: now
                               };
                               
                               const response = await apiRequest(

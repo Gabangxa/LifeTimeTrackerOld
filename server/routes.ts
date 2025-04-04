@@ -34,10 +34,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API route to save user life data
   app.post('/api/life-data', async (req: Request, res: Response) => {
     try {
+      // Debug the incoming data
+      console.log('Received data for saving:', JSON.stringify(req.body, null, 2));
+      console.log('Type of createdAt:', typeof req.body.createdAt);
+      console.log('Type of updatedAt:', typeof req.body.updatedAt);
+      
+      // Convert string timestamps to Date objects if needed
+      if (typeof req.body.createdAt === 'string') {
+        req.body.createdAt = new Date(req.body.createdAt);
+      }
+      
+      if (typeof req.body.updatedAt === 'string') {
+        req.body.updatedAt = new Date(req.body.updatedAt);
+      }
+      
       // Validate request body
       const validationResult = insertUserLifeDataSchema.safeParse(req.body);
       
       if (!validationResult.success) {
+        console.log('Validation error:', validationResult.error.format());
         return res.status(400).json({
           message: 'Invalid data provided',
           errors: validationResult.error.format()
@@ -52,6 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: savedData
       });
     } catch (error: any) {
+      console.error('Error saving life data:', error);
       res.status(500).json({
         message: `Failed to save life data: ${error.message}`
       });
