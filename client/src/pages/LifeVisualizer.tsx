@@ -48,6 +48,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { BuyMeCoffeeButton } from '@/components/BuyMeCoffeeButton';
 import { 
   Dialog, 
   DialogContent, 
@@ -1035,6 +1036,17 @@ const LifeVisualizer: React.FC = () => {
                   </div>
                 </div>
                 
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                  <div className="text-sm text-muted-foreground">
+                    Like this tool? Consider supporting the developer!
+                  </div>
+                  <BuyMeCoffeeButton 
+                    username="YOUR_USERNAME" 
+                    variant="small"
+                    text="Buy me a coffee" 
+                  />
+                </div>
+                
                 <Button 
                   type="submit" 
                   disabled={loading} 
@@ -1333,7 +1345,7 @@ const LifeVisualizer: React.FC = () => {
                       <p className="text-sm">
                         Adding just <span className="font-semibold">30 minutes</span> more to your daily exercise routine could add <span className="font-semibold">{exerciseOptimization.yearsGained} extra years</span> to your life expectancy!
                       </p>
-                      <div className="mt-4 flex flex-wrap gap-4">
+                      <div className="mt-4 flex flex-wrap items-center gap-4">
                         <Button onClick={() => {
                           const exerciseIndex = activities.findIndex(a => a.name.toLowerCase().includes('exercise'));
                           if (exerciseIndex >= 0) {
@@ -1402,6 +1414,11 @@ const LifeVisualizer: React.FC = () => {
                             </>
                           )}
                         </Button>
+                        
+                        <BuyMeCoffeeButton 
+                          username="YOUR_USERNAME" 
+                          text="Support This Project" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -1419,7 +1436,7 @@ const LifeVisualizer: React.FC = () => {
               <h3 className="text-lg font-semibold mb-2">Lifetime Visualizer</h3>
               <p className="text-gray-400 text-sm">Understand how you spend your most valuable asset: time.</p>
             </div>
-            <div className="flex space-x-6">
+            <div className="flex space-x-6 items-center">
               <a href="#" className="text-gray-400 hover:text-white">
                 <Github className="h-5 w-5" />
               </a>
@@ -1428,6 +1445,19 @@ const LifeVisualizer: React.FC = () => {
               </a>
               <a href="#" className="text-gray-400 hover:text-white">
                 <Mail className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://www.buymeacoffee.com/YOUR_USERNAME" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center px-4 py-1.5 bg-[#FFDD00] text-[#000000] rounded-md font-bold text-sm hover:bg-[#FFDD00]/90 transition-colors"
+              >
+                <img 
+                  src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" 
+                  alt="Buy me a coffee" 
+                  className="h-4 w-4 mr-1.5"
+                />
+                Buy me a coffee
               </a>
             </div>
           </div>
