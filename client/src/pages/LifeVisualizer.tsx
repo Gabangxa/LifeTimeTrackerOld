@@ -1036,16 +1036,7 @@ const LifeVisualizer: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                  <div className="text-sm text-muted-foreground">
-                    Like this tool? Consider supporting the developer!
-                  </div>
-                  <BuyMeCoffeeButton 
-                    username="YOUR_USERNAME" 
-                    variant="small"
-                    text="Buy me a coffee" 
-                  />
-                </div>
+
                 
                 <Button 
                   type="submit" 
@@ -1414,11 +1405,6 @@ const LifeVisualizer: React.FC = () => {
                             </>
                           )}
                         </Button>
-                        
-                        <BuyMeCoffeeButton 
-                          username="YOUR_USERNAME" 
-                          text="Support This Project" 
-                        />
                       </div>
                     </div>
                   </div>
@@ -1446,19 +1432,10 @@ const LifeVisualizer: React.FC = () => {
               <a href="#" className="text-gray-400 hover:text-white">
                 <Mail className="h-5 w-5" />
               </a>
-              <a 
-                href="https://www.buymeacoffee.com/YOUR_USERNAME" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="flex items-center px-4 py-1.5 bg-[#FFDD00] text-[#000000] rounded-md font-bold text-sm hover:bg-[#FFDD00]/90 transition-colors"
-              >
-                <img 
-                  src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" 
-                  alt="Buy me a coffee" 
-                  className="h-4 w-4 mr-1.5"
-                />
-                Buy me a coffee
-              </a>
+              <BuyMeCoffeeButton 
+                username="YOUR_USERNAME" 
+                text="Buy me a coffee"
+              />
             </div>
           </div>
           <div className="mt-8 border-t border-gray-800 pt-4">
