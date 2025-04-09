@@ -1435,14 +1435,16 @@ const LifeVisualizer: React.FC = () => {
               <a href="#" className="text-gray-400 hover:text-white">
                 <Mail className="h-5 w-5" />
               </a>
+            </div>
+          </div>
+          <div className="mt-8 border-t border-gray-800 pt-4">
+            <div className="flex justify-between items-center">
               <BuyMeCoffeeButton 
                 username="oncedeved" 
                 text="Buy me a coffee"
               />
+              <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Lifetime Visualizer. All rights reserved.</p>
             </div>
-          </div>
-          <div className="mt-8 border-t border-gray-800 pt-4">
-            <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Lifetime Visualizer. All rights reserved.</p>
           </div>
         </div>
       </footer>
