@@ -49,6 +49,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BuyMeCoffeeButton } from '@/components/BuyMeCoffeeButton';
+import { BuyMeCoffeeWidget } from '@/components/BuyMeCoffeeWidget';
 import { 
   Dialog, 
   DialogContent, 
@@ -302,6 +303,10 @@ const generateDynamicComparisons = (activityName: string, years: number): Array<
 };
 
 const LifeVisualizer: React.FC = () => {
+  // Add Buy Me a Coffee widget effect
+  useEffect(() => {
+    // Component will handle adding and cleanup of widget
+  }, []);
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [countries, setCountries] = useState<CountryInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -766,6 +771,15 @@ const LifeVisualizer: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+      <BuyMeCoffeeWidget 
+        id="oncedeved"
+        description="Support me on Buy me a coffee!"
+        message=""
+        color="#FF5F5F"
+        position="Right"
+        x_margin={18}
+        y_margin={18}
+      />
       {/* Header */}
       <header className="bg-white shadow-sm dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
