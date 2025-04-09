@@ -1433,7 +1433,7 @@ const LifeVisualizer: React.FC = () => {
                 <Mail className="h-5 w-5" />
               </a>
               <BuyMeCoffeeButton 
-                username="YOUR_USERNAME" 
+                username="oncedeved" 
                 text="Buy me a coffee"
               />
             </div>
