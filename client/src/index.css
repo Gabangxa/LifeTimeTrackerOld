@@ -10,4 +10,20 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  
+  /* Soften light mode colors */
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222 47% 20%;
+    --card: 210 20% 96%;
+    --card-foreground: 222 47% 20%;
+    --popover: 210 20% 96%;
+    --popover-foreground: 222 47% 20%;
+    --muted: 210 20% 92%;
+    --muted-foreground: 215 16% 45%;
+    --secondary: 215 16% 90%;
+    --secondary-foreground: 222 47% 20%;
+    --border: 214 32% 85%;
+    --input: 214 32% 85%;
+  }
 }

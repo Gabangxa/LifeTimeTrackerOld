@@ -139,7 +139,7 @@ const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: nu
   'Work': [
     { 
       icon: 'fa-briefcase', 
-      text: (years) => `${formatNumber(years * 260 * 8)} work hours or ${formatNumber(years * 260)} workdays completed 💼` 
+      text: (years) => `${formatNumber(years * 260 * 8)} work hours completed 💼` 
     },
     { 
       icon: 'fa-building', 
