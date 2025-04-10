@@ -138,8 +138,8 @@ const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: nu
   ],
   'Work': [
     { 
-      icon: 'fa-dollar-sign', 
-      text: (years) => `$${formatNumber(years * 80000)} at average salary 💰` 
+      icon: 'fa-briefcase', 
+      text: (years) => `${formatNumber(years * 260 * 8)} work hours or ${formatNumber(years * 260)} workdays completed 💼` 
     },
     { 
       icon: 'fa-building', 
@@ -277,6 +277,47 @@ const GENERIC_COMPARISONS: Array<{icon: string, text: (years: number, activity: 
   {
     icon: 'fa-pizza-slice', 
     text: (years, activity) => `Could've eaten ${formatNumber(years * 365 * 2)} pizzas (not recommended!)`
+  },
+  // Adding 10 more generic comparisons
+  {
+    icon: 'fa-book-open', 
+    text: (years, activity) => `Could've read ${formatNumber(years * 365 * 0.3)} books from cover to cover`
+  },
+  {
+    icon: 'fa-plane', 
+    text: (years, activity) => `Could've taken ${formatNumber(years * 12)} international vacations`
+  },
+  {
+    icon: 'fa-dumbbell', 
+    text: (years, activity) => `Could've completed ${formatNumber(years * 365)} workout sessions`
+  },
+  {
+    icon: 'fa-brain', 
+    text: (years, activity) => `Could've mastered ${Math.floor(years / 3)} different skills`
+  },
+  {
+    icon: 'fa-seedling', 
+    text: (years, activity) => `Could've grown ${formatNumber(years * 20)} vegetable gardens`
+  },
+  {
+    icon: 'fa-paint-brush', 
+    text: (years, activity) => `Could've created ${formatNumber(years * 100)} paintings`
+  },
+  {
+    icon: 'fa-mountain', 
+    text: (years, activity) => `Could've hiked ${formatNumber(years * 1000)} miles of trails`
+  },
+  {
+    icon: 'fa-heartbeat', 
+    text: (years, activity) => `Your heart beat approximately ${formatNumber(years * 365 * 24 * 60 * 75)} times during this period`
+  },
+  {
+    icon: 'fa-utensils', 
+    text: (years, activity) => `Could've cooked ${formatNumber(years * 365 * 2)} homemade meals`
+  },
+  {
+    icon: 'fa-award', 
+    text: (years, activity) => `Could've won ${Math.floor(years * 3)} competitions in your hobby of choice`
   }
 ];
 
