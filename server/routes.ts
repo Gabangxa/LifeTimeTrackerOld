@@ -6,6 +6,28 @@ import { insertUserLifeDataSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve robots.txt
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send(`User-agent: *
+Allow: /
+
+Sitemap: https://lifetime-visualizer.replit.app/sitemap.xml`);
+  });
+
+  // Serve sitemap.xml
+  app.get('/sitemap.xml', (req, res) => {
+    res.type('application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://lifetime-visualizer.replit.app/</loc>
+    <lastmod>2025-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`);
+  });
   // API route to get all countries
   app.get('/api/countries', async (req, res) => {
     try {
