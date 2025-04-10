@@ -769,27 +769,29 @@ const LifeVisualizer: React.FC = () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
 
-      {/* Header */}
-      <header className="bg-white shadow-sm dark:bg-gray-800">
+      {/* Semantic Header with Schema.org markup */}
+      <header className="bg-white shadow-sm dark:bg-gray-800" role="banner" itemScope itemType="https://schema.org/WPHeader">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-xl sm:text-2xl font-bold text-primary flex items-center dark:text-primary">
-            <i className="fas fa-hourglass-half mr-2"></i>
+          <h1 className="text-xl sm:text-2xl font-bold text-primary flex items-center dark:text-primary" itemProp="headline">
+            <i className="fas fa-hourglass-half mr-2" aria-hidden="true" title="Hourglass icon representing time"></i>
             Lifetime Visualizer
           </h1>
           <button 
             onClick={toggleDarkMode}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
           >
             {darkMode ? (
-              <Sun className="h-5 w-5 text-yellow-400" />
+              <Sun className="h-5 w-5 text-yellow-400" aria-hidden="true" />
             ) : (
-              <Moon className="h-5 w-5 text-gray-500" />
+              <Moon className="h-5 w-5 text-gray-500" aria-hidden="true" />
             )}
           </button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" role="main" itemScope itemType="https://schema.org/WebApplication">
         {/* Input Form */}
         <Card className="mb-8">
           <CardHeader>
@@ -1062,7 +1064,7 @@ const LifeVisualizer: React.FC = () => {
         
         {/* Results Container */}
         {visualizeResult && (
-          <div id="resultsContainer" ref={resultsRef}>
+          <article id="resultsContainer" ref={resultsRef} itemScope itemType="https://schema.org/Report">
             {/* Results Summary */}
             <Card className="mb-8">
               <CardContent className="pt-6">
@@ -1414,13 +1416,13 @@ const LifeVisualizer: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
+          </article>
         )}
       </main>
       
-      <footer className="bg-gray-900 text-white py-8 mt-12">
+      <footer className="bg-gray-900 text-white py-8 mt-12" role="contentinfo" itemScope itemType="https://schema.org/WPFooter">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="md:flex md:justify-between">
+          <div className="md:flex md:justify-between" itemScope itemType="https://schema.org/SiteNavigationElement">
             <div className="mb-8 md:mb-0">
               <h3 className="text-lg font-semibold mb-2">Lifetime Visualizer</h3>
               <p className="text-gray-400 text-sm">Understand how you spend your most valuable asset: time.</p>
