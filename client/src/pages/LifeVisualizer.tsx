@@ -1461,32 +1461,32 @@ const LifeVisualizer: React.FC = () => {
         )}
       </main>
       
-      <footer className="bg-gray-900 text-white py-8 mt-12" role="contentinfo" itemScope itemType="https://schema.org/WPFooter">
+      <footer className="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white py-8 mt-12" role="contentinfo" itemScope itemType="https://schema.org/WPFooter">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="md:flex md:justify-between" itemScope itemType="https://schema.org/SiteNavigationElement">
             <div className="mb-8 md:mb-0">
               <h3 className="text-lg font-semibold mb-2">Lifetime Visualizer</h3>
-              <p className="text-gray-400 text-sm">Understand how you spend your most valuable asset: time.</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Understand how you spend your most valuable asset: time.</p>
             </div>
             <div className="flex space-x-6 items-center">
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
                 <Github className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
                 <Mail className="h-5 w-5" />
               </a>
             </div>
           </div>
-          <div className="mt-8 border-t border-gray-800 pt-4">
+          <div className="mt-8 border-t border-gray-200 dark:border-gray-800 pt-4">
             <div className="flex justify-between items-center">
               <BuyMeCoffeeButton 
                 username="oncedeved" 
                 text="Buy me a coffee"
               />
-              <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Lifetime Visualizer. All rights reserved.</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">© {new Date().getFullYear()} Lifetime Visualizer. All rights reserved.</p>
             </div>
           </div>
         </div>
