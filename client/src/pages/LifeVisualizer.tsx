@@ -833,6 +833,11 @@ const LifeVisualizer: React.FC = () => {
         </div>
       </header>
 
+      {/* Daily Quote */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <DailyQuote />
+      </div>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" role="main" itemScope itemType="https://schema.org/WebApplication">
         {/* Input Form */}
         <Card className="mb-8">
