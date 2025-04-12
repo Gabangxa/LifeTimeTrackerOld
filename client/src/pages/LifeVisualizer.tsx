@@ -1053,8 +1053,7 @@ const LifeVisualizer: React.FC = () => {
                                 form.setValue('activities', newActivities);
                               }}
                               placeholder="Activity name"
-                              className={index < 3 ? "bg-gray-50 dark:bg-gray-800" : ""}
-                              readOnly={index < 3}
+                              className="bg-white dark:bg-gray-950"
                             />
                           </div>
                           <div className="w-16">
