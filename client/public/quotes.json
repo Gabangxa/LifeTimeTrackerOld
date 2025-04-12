@@ -1,0 +1,64 @@
+{
+  "quotes": [
+    {
+      "text": "The life which is unexamined is not worth living.",
+      "author": "Socrates",
+      "category": "Pre-Socratic Philosopher",
+      "source": "Plato's Apology"
+    },
+    {
+      "text": "Nature loves to hide.",
+      "author": "Heraclitus",
+      "category": "Pre-Socratic Philosopher",
+      "source": "Fragment 123"
+    },
+    {
+      "text": "The obstacle is the way.",
+      "author": "Marcus Aurelius",
+      "category": "Stoic Philosopher",
+      "source": "Meditations"
+    },
+    {
+      "text": "Knowing others is intelligence; knowing yourself is true wisdom.",
+      "author": "Laozi",
+      "category": "Taoist Philosopher",
+      "source": "Tao Te Ching"
+    },
+    {
+      "text": "Truth is what works in the way of belief.",
+      "author": "William James",
+      "category": "Pragmatist Philosopher",
+      "source": "Pragmatism"
+    },
+    {
+      "text": "Science is the belief in the ignorance of experts.",
+      "author": "Richard Feynman",
+      "category": "Physicist & Philosopher of Science",
+      "source": "The Pleasure of Finding Things Out"
+    },
+    {
+      "text": "The whole is more than the sum of its parts.",
+      "author": "Aristotle",
+      "category": "Ancient Philosopher",
+      "source": "Metaphysics"
+    },
+    {
+      "text": "Do not be too hasty in your judgment of men and things.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "Letters to a Stoic"
+    },
+    {
+      "text": "The sage puts the world away, and so he is always at one with the world.",
+      "author": "Laozi",
+      "category": "Taoist Philosopher",
+      "source": "Tao Te Ching"
+    },
+    {
+      "text": "We are doomed to be free; because once thrown into the world, he is forced to choose.",
+      "author": "Jean-Paul Sartre",
+      "category": "Philosopher of Freedom",
+      "source": "Existentialism is a Humanism"
+    }
+  ]
+}

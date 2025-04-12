@@ -79,6 +79,7 @@ import {
   formatNumber
 } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { DailyQuote } from '@/components/DailyQuote';
 
 // Define form schema
 const formSchema = z.object({
