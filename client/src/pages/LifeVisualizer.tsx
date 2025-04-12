@@ -834,7 +834,7 @@ const LifeVisualizer: React.FC = () => {
       </header>
 
       {/* Daily Quote */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-0">
         <DailyQuote />
       </div>
 

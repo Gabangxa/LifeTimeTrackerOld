@@ -45,13 +45,11 @@ export function DailyQuote() {
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 my-4 border border-gray-200 dark:border-gray-700">
-      <blockquote className="text-gray-700 dark:text-gray-300 italic">
-        <span className="text-xl font-serif">"</span>
+    <div className="py-2">
+      <blockquote className="text-gray-700 dark:text-gray-300 italic text-center">
         <span id="daily-quote">{quote.text}</span>
-        <span className="text-xl font-serif">"</span>
       </blockquote>
-      <div className="mt-2 text-right">
+      <div className="mt-1 text-center">
         <span id="quote-author" className="text-gray-500 dark:text-gray-400">
           — {quote.author}
         </span>
