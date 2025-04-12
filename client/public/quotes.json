@@ -1,6 +1,54 @@
 {
   "quotes": [
     {
+      "text": "Virtue is that perfect good which is the complement of a happy life; the only immortal thing that belongs to mortality—it is the knowledge of good and evil.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "On Benefits"
+    },
+    {
+      "text": "The humanity and excellence of clemency is confessed at all hands... for it is of all dispositions the most peaceable and quiet. He that has revenge in his power, and does not use it, is the great man.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "On Clemency"
+    },
+    {
+      "text": "Death is the test of life, and it is that only which discovers what we are, and distinguishes betwixt ostentation and virtue.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "Letters to Lucilius"
+    },
+    {
+      "text": "It is the bounty of nature that we live; but of philosophy that we live well, which is in truth a greater benefit than life itself.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "On the Happy Life"
+    },
+    {
+      "text": "No man is born wise; but wisdom and virtue require a tutor, though we can easily learn to be vicious without a master.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "Letters to Lucilius"
+    },
+    {
+      "text": "Philosophy is the health of the mind; let us look to that health first, and in the second place to that of the body, which may be had upon easier terms.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "Letters to Lucilius"
+    },
+    {
+      "text": "More than we use is more than we need, and only a burden to the bearer.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "On Tranquility of Mind"
+    },
+    {
+      "text": "The man that would be truly rich must not increase his fortune, but retrench his appetites: for riches are not only superfluous, but mean, and little more to the possessor than to the looker-on.",
+      "author": "Seneca",
+      "category": "Stoic Philosopher",
+      "source": "On the Happy Life"
+    },
+    {
       "text": "The life which is unexamined is not worth living.",
       "author": "Socrates",
       "category": "Pre-Socratic Philosopher",
