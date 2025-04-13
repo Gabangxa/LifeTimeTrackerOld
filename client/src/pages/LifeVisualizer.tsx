@@ -1474,12 +1474,6 @@ const LifeVisualizer: React.FC = () => {
               <p className="text-gray-600 dark:text-gray-400 text-sm">Understand how you spend your most valuable asset: time.</p>
             </div>
             <div className="flex space-x-6 items-center">
-              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
-                <Github className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
-                <Twitter className="h-5 w-5" />
-              </a>
               <a href="mailto:lifetimevisualizer@lifetimeviz.com" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
                 <Mail className="h-5 w-5" />
               </a>
