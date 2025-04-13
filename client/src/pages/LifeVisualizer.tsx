@@ -1480,7 +1480,7 @@ const LifeVisualizer: React.FC = () => {
               <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
+              <a href="mailto:lifetimevisualizer@lifetimeviz.com" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
                 <Mail className="h-5 w-5" />
               </a>
             </div>
@@ -1491,7 +1491,12 @@ const LifeVisualizer: React.FC = () => {
                 username="oncedeved" 
                 text="Buy me a coffee"
               />
-              <p className="text-gray-600 dark:text-gray-400 text-sm">© {new Date().getFullYear()} Lifetime Visualizer. All rights reserved.</p>
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">© {new Date().getFullYear()} Lifetime Visualizer. All rights reserved.</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                  Send feedback to: <a href="mailto:lifetimevisualizer@lifetimeviz.com" className="hover:text-primary">lifetimevisualizer@lifetimeviz.com</a>
+                </p>
+              </div>
             </div>
           </div>
         </div>
