@@ -858,7 +858,16 @@ const LifeVisualizer: React.FC = () => {
         <DailyQuote />
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" role="main" itemScope itemType="https://schema.org/WebApplication">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" role="main" 
+        itemScope 
+        itemType="https://schema.org/WebApplication"
+        aria-labelledby="main-heading">
+        {/* WebApplication schema.org additional metadata */}
+        <meta itemProp="name" content="Lifetime Visualizer" />
+        <meta itemProp="applicationCategory" content="LifestyleApplication" />
+        <meta itemProp="applicationSubCategory" content="TimeManagementTool" />
+        <meta itemProp="operatingSystem" content="Any" />
+        <meta itemProp="offers" content="Free" />
         {/* Input Form */}
         <Card className="mb-8">
           <CardHeader>
@@ -1130,7 +1139,15 @@ const LifeVisualizer: React.FC = () => {
         
         {/* Results Container */}
         {visualizeResult && (
-          <article id="resultsContainer" ref={resultsRef} itemScope itemType="https://schema.org/Report">
+          <article id="resultsContainer" ref={resultsRef} 
+                  itemScope itemType="https://schema.org/Report"
+                  aria-label="Life visualization results">
+            <meta itemProp="name" content="Lifetime Activity Analysis Report" />
+            <meta itemProp="dateCreated" content={new Date().toISOString()} />
+            <meta itemProp="author" content="Lifetime Visualizer" />
+            <meta itemProp="about" content="Personal time allocation analysis" />
+            <meta itemProp="keywords" content="life planning, time management, productivity, activity analysis" />
+            
             {/* Results Summary */}
             <Card className="mb-8">
               <CardContent className="pt-6">
@@ -1307,7 +1324,10 @@ const LifeVisualizer: React.FC = () => {
             } gap-6 mb-8`}>
               {/* Use projected stats when available, otherwise use original stats */}
               {(projectedStats && timelineSliderValue > 0 ? projectedStats.activityStats : visualizeResult.activityStats).map((activity) => (
-                <Card key={activity.name} className="overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
+                <Card key={activity.name} 
+                      className="overflow-hidden transition-all hover:shadow-md hover:-translate-y-1"
+                      itemScope itemType="https://schema.org/QuantitativeValue"
+                      itemProp="value">
                   <div className="p-5" style={{ backgroundColor: `${activity.color}15` }}>
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-semibold" style={{ color: activity.color }}>
@@ -1492,6 +1512,16 @@ const LifeVisualizer: React.FC = () => {
             <div className="mb-8 md:mb-0">
               <h3 className="text-lg font-semibold mb-2">Lifetime Visualizer</h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm">Understand how you spend your most valuable asset: time.</p>
+              {/* Hidden SEO-friendly image with descriptive alt text */}
+              <div className="hidden">
+                <img 
+                  src="https://lifetime-visualizer.replit.app/og-image.png"
+                  alt="Lifetime Visualizer dashboard showing how time is allocated across different activities over a lifespan"
+                  width="1200"
+                  height="630"
+                  itemProp="image"
+                />
+              </div>
             </div>
             <div className="flex space-x-6 items-center">
               <a href="mailto:lifetimevisualizer@lifetimeviz.com" className="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white">
