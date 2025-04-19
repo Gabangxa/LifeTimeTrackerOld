@@ -344,7 +344,24 @@ const generateDynamicComparisons = (activityName: string, years: number): Array<
   }));
 };
 
+// SEO optimization function to set metadata dynamically
+const updatePageMetadata = () => {
+  // Update document title for better SEO
+  document.title = "Lifetime Visualizer - Understand How You Spend Your Life | Time Management Tool";
+  
+  // Dynamically update meta description for this specific page
+  const pageMetaDescription = document.querySelector('meta[name="description"]');
+  if (pageMetaDescription) {
+    pageMetaDescription.setAttribute('content', 
+      'Visualize how you spend your time across your entire lifespan with our interactive life visualization tool. Track activities, see personalized projections, and optimize your life for better productivity and fulfillment.');
+  }
+};
+
 const LifeVisualizer: React.FC = () => {
+  // Update metadata when component mounts
+  useEffect(() => {
+    updatePageMetadata();
+  }, []);
 
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [countries, setCountries] = useState<CountryInfo[]>([]);
@@ -814,9 +831,12 @@ const LifeVisualizer: React.FC = () => {
       {/* Semantic Header with Schema.org markup */}
       <header className="bg-white shadow-sm dark:bg-gray-800" role="banner" itemScope itemType="https://schema.org/WPHeader">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-xl sm:text-2xl font-bold text-primary flex items-center dark:text-primary" itemProp="headline">
+          <h1 className="text-xl sm:text-2xl font-bold text-primary flex items-center dark:text-primary" 
+             itemProp="headline" 
+             aria-label="Lifetime Visualizer - Track and optimize your life's time allocation">
             <i className="fas fa-hourglass-half mr-2" aria-hidden="true" title="Hourglass icon representing time"></i>
-            Lifetime Visualizer
+            <span itemProp="name">Lifetime Visualizer</span>
+            <meta itemProp="description" content="Interactive tool to visualize your lifetime activity allocation based on current habits" />
           </h1>
           <button 
             onClick={toggleDarkMode}

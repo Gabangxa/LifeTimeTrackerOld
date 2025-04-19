@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://lifetime-visualizer.replit.app/</loc>
-    <lastmod>2025-04-08</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2025-04-19</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://lifetime-visualizer.replit.app/og-image.png</image:loc>
+      <image:title>Lifetime Visualizer Dashboard</image:title>
+      <image:caption>Visualize how you spend your time across your lifespan</image:caption>
+    </image:image>
   </url>
 </urlset>

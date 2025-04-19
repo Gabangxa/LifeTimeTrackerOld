@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Specify sitemap location
+Sitemap: https://lifetime-visualizer.replit.app/sitemap.xml
+
+# Crawl delay to control crawl rate
+Crawl-delay: 10
