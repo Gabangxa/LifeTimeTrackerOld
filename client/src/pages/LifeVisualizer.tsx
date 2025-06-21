@@ -1243,9 +1243,17 @@ const LifeVisualizer: React.FC = () => {
                       
                       {/* Interactive Slider */}
                       <div className="mt-8">
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                          Explore how time continues to pass:
-                        </p>
+                        <div className="relative border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-4 mb-4 bg-blue-50/50 dark:bg-blue-900/20">
+                          <div className="absolute -top-3 left-4 bg-white dark:bg-gray-900 px-2">
+                            <span className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                              <Hourglass className="w-4 h-4" />
+                              Interactive Timeline
+                            </span>
+                          </div>
+                          <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                            Explore how time continues to pass:
+                          </p>
+                        </div>
                         <div className="flex items-center space-x-4">
                           <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Today</span>
                           <Slider 
