@@ -17,7 +17,8 @@ import {
   Search,
   AlertCircle,
   ArrowUpRight,
-  Share2
+  Share2,
+  Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -1219,16 +1220,25 @@ const LifeVisualizer: React.FC = () => {
                               : 'hidden'
                           }`} />
                         </div>
-                        <Button 
-                          type="button" 
-                          variant="link" 
-                          size="sm" 
-                          onClick={addActivity}
-                          className="text-primary p-0 h-auto"
-                        >
-                          <PlusCircle className="h-4 w-4 mr-1" />
-                          Add Custom
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={addActivity}
+                                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 group"
+                              >
+                                <Sparkles className="h-4 w-4 mr-1 group-hover:animate-pulse" />
+                                Add Custom
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p className="text-sm">Add your own personalized activity to track how you spend your time. You can add up to 5 activities total.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                     
@@ -1346,7 +1356,7 @@ const LifeVisualizer: React.FC = () => {
                 </Card>
                 <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-700">
                   <CardContent className="p-6 text-center">
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">{visualizeResult.lifeExpectancy - visualizeResult.age}</div>
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">{(visualizeResult.lifeExpectancy - visualizeResult.age).toFixed(1)}</div>
                     <div className="text-sm text-green-700 dark:text-green-300 font-medium">Years Remaining</div>
                   </CardContent>
                 </Card>
