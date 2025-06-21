@@ -843,10 +843,35 @@ const LifeVisualizer: React.FC = () => {
         <meta itemProp="applicationSubCategory" content="TimeManagementTool" />
         <meta itemProp="operatingSystem" content="Any" />
         <meta itemProp="offers" content="Free" />
+        {/* Progress Indicator */}
+        {loading && (
+          <div className="mb-6">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-700 dark:text-blue-300 font-medium">
+                  Calculating your life visualization...
+                </span>
+              </div>
+              <div className="mt-2 bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+                <div className="bg-blue-600 h-2 rounded-full w-3/4 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Input Form */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Your Details</CardTitle>
+        <Card className="mb-8 shadow-lg border-0 ring-1 ring-gray-200 dark:ring-gray-700">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-t-lg">
+            <CardTitle className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-300 font-bold text-sm">1</span>
+              </div>
+              Tell Us About Yourself
+            </CardTitle>
+            <CardDescription>
+              Enter your basic information to get started with your life visualization
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -1039,14 +1064,14 @@ const LifeVisualizer: React.FC = () => {
                     
                     <div className="space-y-3">
                       {activities.map((activity, index) => (
-                        <div key={activity.id} className="flex items-center space-x-2">
+                        <div key={activity.id} className="group flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                           <div 
-                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                            className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
                             style={{ backgroundColor: activity.color || '#3B82F6' }}
                           >
-                            <i className={`fas ${activity.icon || getActivityIcon(activity.name)} text-white`}></i>
+                            <i className={`fas ${activity.icon || getActivityIcon(activity.name)} text-white text-sm`}></i>
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 space-y-1">
                             <Input
                               type="text"
                               value={activity.name}
@@ -1057,34 +1082,40 @@ const LifeVisualizer: React.FC = () => {
                                 form.setValue('activities', newActivities);
                               }}
                               placeholder="Activity name"
-                              className="bg-white dark:bg-gray-950"
+                              className="border-0 bg-transparent p-0 font-medium focus-visible:ring-0 dark:text-white"
                             />
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {activity.hours} {activity.hours === 1 ? 'hour' : 'hours'} per day
+                            </div>
                           </div>
-                          <div className="w-16">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="24"
-                              value={activity.hours}
-                              onChange={(e) => {
-                                const newActivities = [...activities];
-                                newActivities[index].hours = parseFloat(e.target.value) || 0;
-                                form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-                              }}
-                              className="text-center dark:text-white"
-                            />
+                          <div className="flex items-center space-x-2">
+                            <div className="w-20">
+                              <Input
+                                type="number"
+                                min="0"
+                                max="24"
+                                step="0.5"
+                                value={activity.hours}
+                                onChange={(e) => {
+                                  const newActivities = [...activities];
+                                  newActivities[index].hours = parseFloat(e.target.value) || 0;
+                                  form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+                                }}
+                                className="text-center text-sm"
+                              />
+                            </div>
+                            {index >= 3 && (
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => removeActivity(activity.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8 text-muted-foreground hover:text-destructive"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
-                          {index >= 3 && (
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => removeActivity(activity.id)}
-                              className="px-2 text-muted-foreground hover:text-destructive"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -1124,18 +1155,44 @@ const LifeVisualizer: React.FC = () => {
             <meta itemProp="keywords" content="life planning, time management, productivity, activity analysis" />
             
             {/* Results Summary */}
-            <Card className="mb-8">
-              <CardContent className="pt-6">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <div className="mb-8 space-y-6">
+              {/* Key Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700">
+                  <CardContent className="p-6 text-center">
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{visualizeResult.age}</div>
+                    <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">Years Lived</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-200 dark:border-green-700">
+                  <CardContent className="p-6 text-center">
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">{visualizeResult.lifeExpectancy - visualizeResult.age}</div>
+                    <div className="text-sm text-green-700 dark:text-green-300 font-medium">Years Remaining</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 border-purple-200 dark:border-purple-700">
+                  <CardContent className="p-6 text-center">
+                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{formatNumber(visualizeResult.weeksRemaining)}</div>
+                    <div className="text-sm text-purple-700 dark:text-purple-300 font-medium">Weeks Left</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Main Results Card */}
+              <Card className="shadow-xl border-0 ring-1 ring-gray-200 dark:ring-gray-700">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center">
+                      <span className="text-purple-600 dark:text-purple-300 font-bold text-sm">2</span>
+                    </div>
                     Your Life Visualization
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Based on your birthdate and country, you've lived <span className="font-semibold text-primary">{visualizeResult.age} years</span> out of expected <span className="font-semibold text-primary">{visualizeResult.lifeExpectancy} years</span>.
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  </CardTitle>
+                  <CardDescription>
+                    Interactive analysis based on your age {visualizeResult.age} years out of expected {visualizeResult.lifeExpectancy} years
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Pie Chart */}
                   <div className="flex flex-col items-center justify-center">
                     <h3 className="text-lg font-semibold mb-4">Life Spent On Activities</h3>
@@ -1297,6 +1354,7 @@ const LifeVisualizer: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+            </div>
             
             {/* Activity Breakdown - Dynamically display all activities */}
             <div className={`grid grid-cols-1 ${
