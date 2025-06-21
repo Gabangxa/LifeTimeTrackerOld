@@ -802,6 +802,33 @@ const LifeVisualizer: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+      {/* Floating Navigation */}
+      {visualizeResult && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 p-2">
+            <div className="flex space-x-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-full p-2 h-10 w-10"
+                onClick={() => document.getElementById('resultsContainer')?.scrollIntoView({ behavior: 'smooth' })}
+                title="View Results"
+              >
+                <i className="fas fa-chart-pie text-sm"></i>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-full p-2 h-10 w-10"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                title="Back to Top"
+              >
+                <i className="fas fa-arrow-up text-sm"></i>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Semantic Header with Schema.org markup */}
       <header className="bg-white shadow-sm dark:bg-gray-800" role="banner" itemScope itemType="https://schema.org/WPHeader">
@@ -1124,20 +1151,30 @@ const LifeVisualizer: React.FC = () => {
                 
 
                 
-                <Button 
-                  type="submit" 
-                  disabled={loading} 
-                  className="w-full sm:w-auto"
-                >
-                  {loading ? (
-                    <>
-                      <Hourglass className="mr-2 h-4 w-4 animate-spin" />
-                      Calculating...
-                    </>
-                  ) : (
-                    'Visualize My Life'
-                  )}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <Button 
+                    type="submit" 
+                    disabled={loading} 
+                    className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all"
+                  >
+                    {loading ? (
+                      <>
+                        <Hourglass className="mr-2 h-4 w-4 animate-spin" />
+                        Calculating...
+                      </>
+                    ) : (
+                      <>
+                        <Hourglass className="mr-2 h-4 w-4" />
+                        Visualize My Life
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Quick Stats Preview */}
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Total hours: {activities.reduce((sum, activity) => sum + activity.hours, 0)}/24
+                  </div>
+                </div>
               </form>
             </Form>
           </CardContent>
