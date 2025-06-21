@@ -1643,7 +1643,27 @@ const LifeVisualizer: React.FC = () => {
                 
                 {(exerciseOptimization || sleepOptimization) && (
                   <div className="mt-8">
-                    <h3 className="text-lg font-medium mb-4">Health Optimization</h3>
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium mb-3">Health Optimization</h3>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0">
+                            <i className="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-0.5"></i>
+                          </div>
+                          <div className="text-sm text-blue-800 dark:text-blue-200">
+                            <p className="font-medium mb-2">Health Disclaimer</p>
+                            <p className="mb-2">
+                              The health recommendations provided are for informational purposes only and based on general guidelines. 
+                              They are not intended as personalized medical advice, diagnosis, or treatment.
+                            </p>
+                            <p className="text-xs">
+                              Always consult with qualified healthcare professionals before making significant changes to your sleep, 
+                              exercise, or lifestyle habits, especially if you have existing health conditions or concerns.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     
                     {/* Exercise Optimization */}
                     {exerciseOptimization && (
@@ -1710,7 +1730,7 @@ const LifeVisualizer: React.FC = () => {
                         </div>
 
                         <div className="mb-4">
-                          <p className="text-sm font-medium mb-2">Personalized Recommendations</p>
+                          <p className="text-sm font-medium mb-2">General Recommendations</p>
                           <ul className="space-y-1">
                             {exerciseOptimization.recommendations.map((rec, idx) => (
                               <li key={idx} className="flex items-start gap-2 text-sm">
@@ -1719,6 +1739,9 @@ const LifeVisualizer: React.FC = () => {
                               </li>
                             ))}
                           </ul>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                            *Start slowly and consult a fitness professional or doctor before beginning any new exercise program.
+                          </p>
                         </div>
 
                         {!exerciseOptimization.isOptimal && parseFloat(exerciseOptimization.potentialGain) > 0 && (
@@ -1825,7 +1848,7 @@ const LifeVisualizer: React.FC = () => {
                         </div>
 
                         <div>
-                          <p className="text-sm font-medium mb-2">Recommendations</p>
+                          <p className="text-sm font-medium mb-2">General Sleep Recommendations</p>
                           <ul className="space-y-1">
                             {sleepOptimization.recommendations.map((rec, idx) => (
                               <li key={idx} className="flex items-start gap-2 text-sm">
@@ -1834,6 +1857,9 @@ const LifeVisualizer: React.FC = () => {
                               </li>
                             ))}
                           </ul>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
+                            *If sleep problems persist, consult a healthcare provider or sleep specialist for proper evaluation.
+                          </p>
                         </div>
                       </div>
                     )}
@@ -1893,6 +1919,32 @@ const LifeVisualizer: React.FC = () => {
                           </>
                         )}
                       </Button>
+                    </div>
+
+                    {/* Medical Disclaimer Footer */}
+                    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0">
+                            <i className="fas fa-exclamation-triangle text-amber-600 dark:text-amber-400 mt-0.5"></i>
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                            <p className="font-medium mb-1">Important Medical Disclaimer</p>
+                            <p className="mb-2">
+                              This tool provides general health information based on established guidelines and should not replace professional medical advice. 
+                              Health recommendations are estimates and may not apply to your individual circumstances.
+                            </p>
+                            <p className="mb-2">
+                              Lifespan calculations are statistical projections based on population averages and do not predict individual outcomes. 
+                              Many factors including genetics, environment, and access to healthcare significantly impact longevity.
+                            </p>
+                            <p>
+                              Always consult qualified healthcare professionals for personalized medical advice, especially before making significant lifestyle changes 
+                              or if you have pre-existing health conditions.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
