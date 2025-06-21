@@ -792,6 +792,76 @@ const LifeVisualizer: React.FC = () => {
     };
   };
 
+  // Calculate sleep optimization
+  const calculateSleepOptimization = () => {
+    if (!visualizeResult) return null;
+    
+    const sleepActivity = activities.find(a => a.name.toLowerCase().includes('sleep'));
+    if (!sleepActivity) return null;
+
+    const currentSleep = sleepActivity.hours;
+    const optimalSleep = 8; // Recommended 8 hours
+    const sleepDifference = Math.abs(currentSleep - optimalSleep);
+    
+    // Determine sleep quality and recommendations
+    let sleepQuality = '';
+    let recommendations: string[] = [];
+    let healthImpact = '';
+    let yearsImpact = 0;
+
+    if (currentSleep < 6) {
+      sleepQuality = 'Severely Insufficient';
+      healthImpact = 'Major negative impact on health, cognitive function, and lifespan';
+      yearsImpact = -3;
+      recommendations = [
+        'Establish a consistent bedtime routine',
+        'Avoid screens 1 hour before bed',
+        'Keep bedroom cool (60-67°F/15-19°C)',
+        'Consider consulting a sleep specialist'
+      ];
+    } else if (currentSleep < 7) {
+      sleepQuality = 'Insufficient';
+      healthImpact = 'Increased risk of health issues and reduced cognitive performance';
+      yearsImpact = -1.5;
+      recommendations = [
+        'Gradually increase sleep by 15-30 minutes',
+        'Create a dark, quiet sleep environment',
+        'Limit caffeine after 2 PM',
+        'Try relaxation techniques before bed'
+      ];
+    } else if (currentSleep >= 7 && currentSleep <= 9) {
+      sleepQuality = 'Optimal';
+      healthImpact = 'Supporting optimal health, cognitive function, and longevity';
+      yearsImpact = 0;
+      recommendations = [
+        'Maintain your excellent sleep schedule',
+        'Continue good sleep hygiene practices',
+        'Monitor sleep quality, not just quantity',
+        'Stay consistent with weekend sleep times'
+      ];
+    } else if (currentSleep > 9) {
+      sleepQuality = 'Excessive';
+      healthImpact = 'May indicate underlying health issues or poor sleep quality';
+      yearsImpact = -0.5;
+      recommendations = [
+        'Evaluate sleep quality vs. quantity',
+        'Consider sleep study if persistently tired',
+        'Maintain regular sleep/wake times',
+        'Increase physical activity during the day'
+      ];
+    }
+
+    return {
+      currentHours: currentSleep,
+      optimalHours: optimalSleep,
+      quality: sleepQuality,
+      healthImpact,
+      yearsImpact: yearsImpact.toFixed(1),
+      recommendations,
+      sleepDebt: currentSleep < 8 ? (8 - currentSleep).toFixed(1) : null
+    };
+  };
+
   // Toggle dark mode
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -799,6 +869,7 @@ const LifeVisualizer: React.FC = () => {
   };
 
   const exerciseOptimization = calculateExerciseOptimization();
+  const sleepOptimization = calculateSleepOptimization();
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
@@ -1498,83 +1569,170 @@ const LifeVisualizer: React.FC = () => {
                   </div>
                 </div>
                 
-                {exerciseOptimization && (
+                {(exerciseOptimization || sleepOptimization) && (
                   <div className="mt-8">
                     <h3 className="text-lg font-medium mb-4">Health Optimization</h3>
-                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                      <p className="text-sm">
-                        Adding just <span className="font-semibold">30 minutes</span> more to your daily exercise routine could add <span className="font-semibold">{exerciseOptimization.yearsGained} extra years</span> to your life expectancy!
-                      </p>
-                      <div className="mt-4 flex flex-wrap items-center gap-4">
-                        <Button onClick={() => {
-                          const exerciseIndex = activities.findIndex(a => a.name.toLowerCase().includes('exercise'));
-                          if (exerciseIndex >= 0) {
-                            const updatedActivities = [...activities];
-                            updatedActivities[exerciseIndex].hours = exerciseOptimization.increasedHours;
-                            form.setValue('activities', updatedActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-                            form.handleSubmit(visualizeData)();
-                          }
-                        }}>
-                          Recalculate with Changes
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          onClick={async () => {
-                            if (!visualizeResult || !resultsRef.current) return;
-                            
-                            setIsSharing(true);
-                            
-                            try {
-                              const canvas = await html2canvas(resultsRef.current, {
-                                backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-                                allowTaint: true,
-                                useCORS: true,
-                                scale: 1.5 // Higher quality
-                              });
-                              
-                              // Convert canvas to blob
-                              canvas.toBlob((blob) => {
-                                if (!blob) {
-                                  throw new Error("Failed to create image");
-                                }
-                                
-                                // Create download link
-                                const url = URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.download = 'my-life-visualization.png';
-                                link.href = url;
-                                link.click();
-                                
-                                // Clean up
-                                URL.revokeObjectURL(url);
-                                
-                                toast({
-                                  title: "Screenshot captured",
-                                  description: "Your life visualization has been downloaded as an image.",
-                                  variant: "default",
-                                });
-                              }, 'image/png');
-                            } catch (error: any) {
-                              console.error("Screenshot error:", error);
-                              toast({
-                                title: "Failed to capture screenshot",
-                                description: error.message || "Please try again later.",
-                                variant: "destructive",
-                              });
-                            } finally {
-                              setIsSharing(false);
+                    
+                    {/* Exercise Optimization */}
+                    {exerciseOptimization && (
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800 mb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                          <i className="fas fa-dumbbell text-green-600 dark:text-green-400"></i>
+                          <h4 className="font-semibold text-green-800 dark:text-green-200">Exercise Optimization</h4>
+                        </div>
+                        <p className="text-sm">
+                          Adding just <span className="font-semibold">30 minutes</span> more to your daily exercise routine could add <span className="font-semibold">{exerciseOptimization.yearsGained} extra years</span> to your life expectancy!
+                        </p>
+                        <div className="mt-4">
+                          <Button onClick={() => {
+                            const exerciseIndex = activities.findIndex(a => a.name.toLowerCase().includes('exercise'));
+                            if (exerciseIndex >= 0) {
+                              const updatedActivities = [...activities];
+                              updatedActivities[exerciseIndex].hours = exerciseOptimization.increasedHours;
+                              form.setValue('activities', updatedActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+                              form.handleSubmit(visualizeData)();
                             }
-                          }}
-                          disabled={isSharing}
-                        >
-                          {isSharing ? 'Capturing...' : (
-                            <>
-                              <Share2 className="w-4 h-4 mr-2" />
-                              Share Results
-                            </>
-                          )}
-                        </Button>
+                          }}>
+                            Recalculate with Changes
+                          </Button>
+                        </div>
                       </div>
+                    )}
+
+                    {/* Sleep Optimization */}
+                    {sleepOptimization && (
+                      <div className={`rounded-lg p-4 border ${
+                        sleepOptimization.quality === 'Optimal' 
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                          : sleepOptimization.quality === 'Severely Insufficient'
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                          : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <i className={`fas fa-bed ${
+                            sleepOptimization.quality === 'Optimal' 
+                              ? 'text-green-600 dark:text-green-400'
+                              : sleepOptimization.quality === 'Severely Insufficient'
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-yellow-600 dark:text-yellow-400'
+                          }`}></i>
+                          <h4 className={`font-semibold ${
+                            sleepOptimization.quality === 'Optimal' 
+                              ? 'text-green-800 dark:text-green-200'
+                              : sleepOptimization.quality === 'Severely Insufficient'
+                              ? 'text-red-800 dark:text-red-200'
+                              : 'text-yellow-800 dark:text-yellow-200'
+                          }`}>
+                            Sleep Health Analysis
+                          </h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <p className="text-sm font-medium mb-2">Current Sleep Pattern</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold">{sleepOptimization.currentHours}h</span>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                sleepOptimization.quality === 'Optimal' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
+                                  : sleepOptimization.quality === 'Severely Insufficient'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100'
+                              }`}>
+                                {sleepOptimization.quality}
+                              </span>
+                            </div>
+                            {sleepOptimization.sleepDebt && (
+                              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                Sleep debt: {sleepOptimization.sleepDebt}h per night
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Health Impact</p>
+                            <p className="text-sm">{sleepOptimization.healthImpact}</p>
+                            {sleepOptimization.yearsImpact !== '0.0' && (
+                              <p className={`text-xs mt-1 font-medium ${
+                                parseFloat(sleepOptimization.yearsImpact) > 0 
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              }`}>
+                                Potential lifespan impact: {sleepOptimization.yearsImpact > 0 ? '+' : ''}{sleepOptimization.yearsImpact} years
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium mb-2">Recommendations</p>
+                          <ul className="space-y-1">
+                            {sleepOptimization.recommendations.map((rec, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm">
+                                <i className="fas fa-check-circle text-blue-500 mt-0.5 text-xs"></i>
+                                <span>{rec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap items-center gap-4">
+                      <Button 
+                        variant="outline"
+                        onClick={async () => {
+                          if (!visualizeResult || !resultsRef.current) return;
+                          
+                          setIsSharing(true);
+                          
+                          try {
+                            const canvas = await html2canvas(resultsRef.current, {
+                              backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                              allowTaint: true,
+                              useCORS: true,
+                              scale: 1.5
+                            });
+                            
+                            canvas.toBlob((blob) => {
+                              if (!blob) {
+                                throw new Error("Failed to create image");
+                              }
+                              
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.download = 'my-life-visualization.png';
+                              link.href = url;
+                              link.click();
+                              
+                              URL.revokeObjectURL(url);
+                              
+                              toast({
+                                title: "Screenshot captured",
+                                description: "Your life visualization has been downloaded as an image.",
+                                variant: "default",
+                              });
+                            }, 'image/png');
+                          } catch (error: any) {
+                            console.error("Screenshot error:", error);
+                            toast({
+                              title: "Failed to capture screenshot",
+                              description: error.message || "Please try again later.",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsSharing(false);
+                          }
+                        }}
+                        disabled={isSharing}
+                      >
+                        {isSharing ? 'Capturing...' : (
+                          <>
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Share Results
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
                 )}
