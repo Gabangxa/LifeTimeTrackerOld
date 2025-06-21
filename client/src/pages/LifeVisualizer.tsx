@@ -779,16 +779,88 @@ const LifeVisualizer: React.FC = () => {
   const calculateExerciseOptimization = () => {
     if (!visualizeResult) return null;
     
-    const exerciseActivity = activities.find(a => a.name.toLowerCase().includes('exercise'));
+    const exerciseActivity = activities.find(a => 
+      a.name.toLowerCase().includes('exercise') || 
+      a.name.toLowerCase().includes('workout') || 
+      a.name.toLowerCase().includes('fitness') ||
+      a.name.toLowerCase().includes('gym')
+    );
     if (!exerciseActivity) return null;
 
-    // If adding 30 min (0.5 hours) more exercise per day
-    const additionalExercise = exerciseActivity.hours + 0.5;
-    const yearsGained = (0.5 / 24) * 365 * (visualizeResult.lifeExpectancy - visualizeResult.age) / 365 * 2; // Exercise has double impact
+    const currentExercise = exerciseActivity.hours;
+    const weeklyHours = currentExercise * 7;
+    const recommendedWeekly = 2.5; // WHO recommends 150 minutes = 2.5 hours per week
     
+    let fitnessLevel = '';
+    let healthImpact = '';
+    let recommendations: string[] = [];
+    let yearsImpact = 0;
+    let optimizedHours = currentExercise;
+
+    if (weeklyHours < 1.25) { // Less than 75 minutes per week
+      fitnessLevel = 'Sedentary';
+      healthImpact = 'Significantly increased risk of cardiovascular disease, diabetes, and premature death';
+      yearsImpact = -2.5;
+      optimizedHours = 0.36; // ~25 minutes daily
+      recommendations = [
+        'Start with 10-minute walks after meals',
+        'Take stairs instead of elevators',
+        'Park farther away or get off transit one stop early',
+        'Try bodyweight exercises during TV breaks',
+        'Set reminders to move every hour'
+      ];
+    } else if (weeklyHours < 2.5) { // 75-150 minutes per week
+      fitnessLevel = 'Lightly Active';
+      healthImpact = 'Some health benefits, but below optimal levels for longevity';
+      yearsImpact = -1;
+      optimizedHours = 0.5; // 30 minutes daily
+      recommendations = [
+        'Gradually increase to 30 minutes of moderate activity daily',
+        'Add strength training 2 days per week',
+        'Try brisk walking, cycling, or swimming',
+        'Join group fitness classes for motivation',
+        'Use fitness apps to track progress'
+      ];
+    } else if (weeklyHours >= 2.5 && weeklyHours <= 5) { // 150-300 minutes per week
+      fitnessLevel = 'Active';
+      healthImpact = 'Meeting guidelines with significant health benefits and longevity gains';
+      yearsImpact = 2;
+      optimizedHours = currentExercise; // Already optimal
+      recommendations = [
+        'Maintain your excellent exercise routine',
+        'Add variety with different activities',
+        'Include both cardio and strength training',
+        'Consider high-intensity interval training',
+        'Focus on consistency and injury prevention'
+      ];
+    } else if (weeklyHours > 5) { // More than 300 minutes per week
+      fitnessLevel = 'Highly Active';
+      healthImpact = 'Exceptional fitness level with maximum health and longevity benefits';
+      yearsImpact = 3.5;
+      optimizedHours = currentExercise;
+      recommendations = [
+        'Outstanding commitment to fitness!',
+        'Ensure adequate recovery time between sessions',
+        'Monitor for overtraining symptoms',
+        'Consider periodization in your training',
+        'Maintain proper nutrition and hydration'
+      ];
+    }
+
+    const potentialGain = optimizedHours > currentExercise ? 
+      ((optimizedHours - currentExercise) / 24) * 365 * (visualizeResult.lifeExpectancy - visualizeResult.age) / 365 * 3 : 0;
+
     return {
-      yearsGained: yearsGained.toFixed(1),
-      increasedHours: additionalExercise
+      currentHours: currentExercise,
+      currentWeeklyHours: weeklyHours.toFixed(1),
+      recommendedWeeklyHours: recommendedWeekly,
+      fitnessLevel,
+      healthImpact,
+      yearsImpact: yearsImpact.toFixed(1),
+      recommendations,
+      optimizedHours,
+      potentialGain: potentialGain.toFixed(1),
+      isOptimal: weeklyHours >= 2.5 && weeklyHours <= 5
     };
   };
 
@@ -1575,26 +1647,114 @@ const LifeVisualizer: React.FC = () => {
                     
                     {/* Exercise Optimization */}
                     {exerciseOptimization && (
-                      <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800 mb-6">
-                        <div className="flex items-center gap-2 mb-2">
-                          <i className="fas fa-dumbbell text-green-600 dark:text-green-400"></i>
-                          <h4 className="font-semibold text-green-800 dark:text-green-200">Exercise Optimization</h4>
+                      <div className={`rounded-lg p-4 border mb-6 ${
+                        exerciseOptimization.fitnessLevel === 'Active' || exerciseOptimization.fitnessLevel === 'Highly Active'
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                          : exerciseOptimization.fitnessLevel === 'Sedentary'
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                          : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <i className={`fas fa-dumbbell ${
+                            exerciseOptimization.fitnessLevel === 'Active' || exerciseOptimization.fitnessLevel === 'Highly Active'
+                              ? 'text-green-600 dark:text-green-400'
+                              : exerciseOptimization.fitnessLevel === 'Sedentary'
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-yellow-600 dark:text-yellow-400'
+                          }`}></i>
+                          <h4 className={`font-semibold ${
+                            exerciseOptimization.fitnessLevel === 'Active' || exerciseOptimization.fitnessLevel === 'Highly Active'
+                              ? 'text-green-800 dark:text-green-200'
+                              : exerciseOptimization.fitnessLevel === 'Sedentary'
+                              ? 'text-red-800 dark:text-red-200'
+                              : 'text-yellow-800 dark:text-yellow-200'
+                          }`}>
+                            Exercise & Fitness Analysis
+                          </h4>
                         </div>
-                        <p className="text-sm">
-                          Adding just <span className="font-semibold">30 minutes</span> more to your daily exercise routine could add <span className="font-semibold">{exerciseOptimization.yearsGained} extra years</span> to your life expectancy!
-                        </p>
-                        <div className="mt-4">
-                          <Button onClick={() => {
-                            const exerciseIndex = activities.findIndex(a => a.name.toLowerCase().includes('exercise'));
-                            if (exerciseIndex >= 0) {
-                              const updatedActivities = [...activities];
-                              updatedActivities[exerciseIndex].hours = exerciseOptimization.increasedHours;
-                              form.setValue('activities', updatedActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-                              form.handleSubmit(visualizeData)();
-                            }
-                          }}>
-                            Recalculate with Changes
-                          </Button>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <p className="text-sm font-medium mb-2">Current Activity Level</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold">{exerciseOptimization.currentWeeklyHours}h</span>
+                              <span className="text-sm text-gray-500">per week</span>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                exerciseOptimization.fitnessLevel === 'Active' || exerciseOptimization.fitnessLevel === 'Highly Active'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
+                                  : exerciseOptimization.fitnessLevel === 'Sedentary'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100'
+                              }`}>
+                                {exerciseOptimization.fitnessLevel}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              WHO recommends: {exerciseOptimization.recommendedWeeklyHours}h/week minimum
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium mb-2">Health Impact</p>
+                            <p className="text-sm">{exerciseOptimization.healthImpact}</p>
+                            {exerciseOptimization.yearsImpact !== '0.0' && (
+                              <p className={`text-xs mt-1 font-medium ${
+                                parseFloat(exerciseOptimization.yearsImpact) > 0 
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              }`}>
+                                Lifespan impact: {parseFloat(exerciseOptimization.yearsImpact) > 0 ? '+' : ''}{exerciseOptimization.yearsImpact} years
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="text-sm font-medium mb-2">Personalized Recommendations</p>
+                          <ul className="space-y-1">
+                            {exerciseOptimization.recommendations.map((rec, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm">
+                                <i className="fas fa-check-circle text-blue-500 mt-0.5 text-xs"></i>
+                                <span>{rec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {!exerciseOptimization.isOptimal && parseFloat(exerciseOptimization.potentialGain) > 0 && (
+                          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 mb-4 border border-blue-200 dark:border-blue-700">
+                            <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
+                              Optimization Opportunity
+                            </p>
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                              Increasing to {exerciseOptimization.optimizedHours.toFixed(1)} hours daily could add 
+                              <span className="font-semibold"> {exerciseOptimization.potentialGain} years</span> to your lifespan!
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-3">
+                          {!exerciseOptimization.isOptimal && (
+                            <Button 
+                              size="sm"
+                              onClick={() => {
+                                const exerciseIndex = activities.findIndex(a => 
+                                  a.name.toLowerCase().includes('exercise') || 
+                                  a.name.toLowerCase().includes('workout') || 
+                                  a.name.toLowerCase().includes('fitness') ||
+                                  a.name.toLowerCase().includes('gym')
+                                );
+                                if (exerciseIndex >= 0) {
+                                  const updatedActivities = [...activities];
+                                  updatedActivities[exerciseIndex].hours = exerciseOptimization.optimizedHours;
+                                  form.setValue('activities', updatedActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+                                  form.handleSubmit(visualizeData)();
+                                }
+                              }}
+                            >
+                              Apply Optimization
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )}
