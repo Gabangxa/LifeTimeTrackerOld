@@ -6,9 +6,9 @@ const app = express();
 
 // Security Headers Middleware - applied to all responses
 app.use((req, res, next) => {
-  // Content Security Policy
+  // Content Security Policy with default-src 'none' for maximum security
   res.setHeader('Content-Security-Policy', 
-    "default-src 'self'; " +
+    "default-src 'none'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://kit.fontawesome.com https://cdnjs.cloudflare.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://kit.fontawesome.com https://cdnjs.cloudflare.com; " +
     "font-src 'self' https://fonts.gstatic.com https://kit.fontawesome.com https://cdnjs.cloudflare.com data:; " +
@@ -16,7 +16,10 @@ app.use((req, res, next) => {
     "connect-src 'self' https://api.worldbank.org wss: ws:; " +
     "worker-src 'self' blob:; " +
     "child-src 'self'; " +
+    "frame-src 'none'; " +
+    "media-src 'none'; " +
     "object-src 'none'; " +
+    "manifest-src 'self'; " +
     "base-uri 'self'; " +
     "form-action 'self';"
   );
