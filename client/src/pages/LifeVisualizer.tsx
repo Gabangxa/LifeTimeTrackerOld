@@ -330,6 +330,509 @@ const getRecommendationMessage = (age: number, country: string, profession?: str
   return baseMessage + countryContext + '.';
 };
 
+// Advanced Analytics Functions
+
+// Trend analysis: Calculate compound effects of small changes
+const calculateTrendAnalysis = (
+  currentActivity: ActivityData, 
+  changeInHours: number, 
+  ageRange: { start: number; end: number },
+  currentAge: number
+): {
+  originalYears: number;
+  modifiedYears: number;
+  compoundEffect: number;
+  yearlyImpact: number;
+  recommendations: string[];
+  compoundingFactors: {
+    healthMultiplier: number;
+    skillMultiplier: number;
+    totalBenefit: number;
+  };
+} => {
+  const yearsInPeriod = ageRange.end - ageRange.start;
+  const activityLower = currentActivity.name.toLowerCase();
+  
+  // Calculate base time change (linear component)
+  const originalHoursPerYear = currentActivity.hours * 365;
+  const modifiedHoursPerYear = (currentActivity.hours + changeInHours) * 365;
+  
+  const baseOriginalYears = (originalHoursPerYear * yearsInPeriod) / (365 * 24);
+  const baseModifiedYears = (modifiedHoursPerYear * yearsInPeriod) / (365 * 24);
+  
+  // Calculate compounding effects based on activity type and age
+  const compoundingFactors = calculateCompoundingFactors(activityLower, changeInHours, currentAge, yearsInPeriod);
+  
+  // Apply compounding multipliers
+  const originalYears = baseOriginalYears;
+  const modifiedYears = baseModifiedYears * compoundingFactors.totalBenefit;
+  
+  const compoundEffect = modifiedYears - originalYears;
+  const yearlyImpact = compoundEffect / yearsInPeriod;
+  
+  const recommendations = generateTrendRecommendations(currentActivity.name, changeInHours, compoundEffect, compoundingFactors);
+  
+  return {
+    originalYears,
+    modifiedYears,
+    compoundEffect,
+    yearlyImpact,
+    recommendations,
+    compoundingFactors
+  };
+};
+
+// Calculate compounding factors based on activity type, age, and duration
+const calculateCompoundingFactors = (
+  activityLower: string,
+  changeInHours: number,
+  currentAge: number,
+  yearsInPeriod: number
+): {
+  healthMultiplier: number;
+  skillMultiplier: number;
+  totalBenefit: number;
+} => {
+  let healthMultiplier = 1.0;
+  let skillMultiplier = 1.0;
+  
+  const isPositiveChange = changeInHours > 0;
+  const ageFactor = Math.max(0.5, 1 - (currentAge - 25) / 100); // Younger people benefit more from habit changes
+  const timeFactor = Math.min(2.0, 1 + yearsInPeriod / 20); // Longer time periods show more compounding
+  
+  if (activityLower.includes('exercise') || activityLower.includes('fitness')) {
+    if (isPositiveChange) {
+      // Exercise compounds: better cardiovascular health, energy, longevity
+      healthMultiplier = 1 + (0.3 * ageFactor * timeFactor * Math.abs(changeInHours));
+      // Each hour of exercise can add 3-7 hours of productive life through health benefits
+      healthMultiplier = Math.min(1.5, healthMultiplier + 0.2 * Math.abs(changeInHours));
+    } else {
+      // Reducing exercise has diminishing negative returns
+      healthMultiplier = Math.max(0.7, 1 + (0.2 * changeInHours * ageFactor));
+    }
+  } else if (activityLower.includes('learning') || activityLower.includes('study') || activityLower.includes('skill')) {
+    if (isPositiveChange) {
+      // Learning compounds exponentially: knowledge builds on knowledge
+      skillMultiplier = 1 + (0.4 * ageFactor * timeFactor * Math.abs(changeInHours));
+      // Skills unlock opportunities that multiply over time
+      skillMultiplier = Math.min(2.0, skillMultiplier + 0.15 * yearsInPeriod / 10);
+    }
+  } else if (activityLower.includes('work') || activityLower.includes('career')) {
+    if (isPositiveChange && changeInHours <= 2) {
+      // Strategic work time compounds through career advancement
+      skillMultiplier = 1 + (0.25 * Math.min(1.2, ageFactor * 2) * Math.abs(changeInHours));
+    } else if (changeInHours > 2) {
+      // Overwork has diminishing returns and health costs
+      healthMultiplier = Math.max(0.8, 1 - 0.1 * (changeInHours - 2));
+    }
+  } else if (activityLower.includes('social') || activityLower.includes('family') || activityLower.includes('relationship')) {
+    if (isPositiveChange) {
+      // Strong relationships provide compounding emotional and health benefits
+      healthMultiplier = 1 + (0.2 * timeFactor * Math.abs(changeInHours));
+      // Social connections become more valuable with age
+      const socialAgeFactor = currentAge > 40 ? 1.3 : 1.0;
+      healthMultiplier *= socialAgeFactor;
+    }
+  } else if (activityLower.includes('sleep')) {
+    if (isPositiveChange && currentAge > 30) {
+      // Good sleep compounds: better cognitive function, immune system, mood
+      healthMultiplier = 1 + (0.25 * timeFactor * Math.abs(changeInHours));
+    } else if (changeInHours < 0) {
+      // Sleep debt compounds negatively
+      healthMultiplier = Math.max(0.6, 1 + (0.3 * changeInHours));
+    }
+  }
+  
+  // Combine factors with realistic bounds
+  const totalBenefit = Math.max(0.5, Math.min(2.5, healthMultiplier * skillMultiplier));
+  
+  return {
+    healthMultiplier,
+    skillMultiplier,
+    totalBenefit
+  };
+};
+
+// Generate recommendations based on trend analysis
+const generateTrendRecommendations = (activityName: string, changeInHours: number, compoundEffect: number, compoundingFactors: any): string[] => {
+  const recommendations: string[] = [];
+  const isPositiveChange = changeInHours > 0;
+  const activityLower = activityName.toLowerCase();
+  
+  if (activityLower.includes('exercise') || activityLower.includes('fitness')) {
+    if (isPositiveChange) {
+      recommendations.push("Regular exercise can increase life expectancy by 3-7 years");
+      recommendations.push("Cardiovascular health improvements compound over time");
+      recommendations.push("Consider progressive training to maximize long-term benefits");
+    } else {
+      recommendations.push("Reducing exercise time may impact long-term health outcomes");
+      recommendations.push("Even small amounts of daily activity provide significant benefits");
+    }
+  } else if (activityLower.includes('learning') || activityLower.includes('study') || activityLower.includes('reading')) {
+    if (isPositiveChange) {
+      recommendations.push("Continuous learning creates exponential knowledge growth");
+      recommendations.push("Skills compound and open new opportunities over decades");
+      recommendations.push("Focus on fundamentals that build upon each other");
+    }
+  } else if (activityLower.includes('work') || activityLower.includes('career')) {
+    if (changeInHours > 1) {
+      recommendations.push("Excessive work hours can lead to burnout and diminishing returns");
+      recommendations.push("Consider if this time investment aligns with career goals");
+    } else if (isPositiveChange && changeInHours <= 1) {
+      recommendations.push("Strategic career time can compound into significant opportunities");
+      recommendations.push("Focus on high-impact activities that build your reputation");
+    }
+  } else if (activityLower.includes('social') || activityLower.includes('family') || activityLower.includes('relationship')) {
+    if (isPositiveChange) {
+      recommendations.push("Strong relationships provide compounding emotional and health benefits");
+      recommendations.push("Social connections often become more valuable with age");
+    }
+  }
+  
+  return recommendations;
+};
+
+// Cost-benefit analysis of time reallocation
+const calculateCostBenefitAnalysis = (
+  fromActivity: ActivityData,
+  toActivity: ActivityData,
+  hoursToReallocate: number,
+  userAge: number,
+  lifeExpectancy: number
+): {
+  opportunityCost: {
+    activity: string;
+    yearsLost: number;
+    qualitativeImpact: string;
+  };
+  benefit: {
+    activity: string;
+    yearsGained: number;
+    qualitativeImpact: string;
+    potentialROI: string;
+  };
+  netImpact: {
+    timeValue: number;
+    recommendation: string;
+    confidence: 'high' | 'medium' | 'low';
+  };
+} => {
+  const remainingYears = lifeExpectancy - userAge;
+  const yearsLost = (hoursToReallocate * 365 * remainingYears) / (365 * 24);
+  const yearsGained = yearsLost; // Same time amount, different activity
+  
+  const fromImpact = getActivityQualitativeImpact(fromActivity.name, false);
+  const toImpact = getActivityQualitativeImpact(toActivity.name, true);
+  
+  const timeValue = calculateTimeValue(fromActivity.name, toActivity.name, hoursToReallocate, userAge);
+  const recommendation = generateReallocationRecommendation(fromActivity.name, toActivity.name, timeValue, userAge);
+  const confidence = calculateConfidenceLevel(fromActivity.name, toActivity.name, userAge);
+  
+  return {
+    opportunityCost: {
+      activity: fromActivity.name,
+      yearsLost,
+      qualitativeImpact: fromImpact
+    },
+    benefit: {
+      activity: toActivity.name,
+      yearsGained,
+      qualitativeImpact: toImpact,
+      potentialROI: calculatePotentialROI(toActivity.name, hoursToReallocate, userAge)
+    },
+    netImpact: {
+      timeValue,
+      recommendation,
+      confidence
+    }
+  };
+};
+
+// Calculate qualitative impact of activities
+const getActivityQualitativeImpact = (activityName: string, isGaining: boolean): string => {
+  const activityLower = activityName.toLowerCase();
+  const action = isGaining ? 'Gaining' : 'Losing';
+  
+  if (activityLower.includes('exercise') || activityLower.includes('fitness')) {
+    return isGaining ? 'Improved health, energy, and longevity' : 'Potential health decline and reduced energy';
+  } else if (activityLower.includes('work') || activityLower.includes('career')) {
+    return isGaining ? 'Career advancement and financial growth' : 'Reduced earning potential and career progress';
+  } else if (activityLower.includes('family') || activityLower.includes('social')) {
+    return isGaining ? 'Stronger relationships and emotional wellbeing' : 'Weakened relationships and social connections';
+  } else if (activityLower.includes('learning') || activityLower.includes('study')) {
+    return isGaining ? 'Knowledge accumulation and skill development' : 'Missed learning opportunities and skill stagnation';
+  } else if (activityLower.includes('leisure') || activityLower.includes('entertainment')) {
+    return isGaining ? 'Improved work-life balance and stress relief' : 'Potential stress increase and reduced relaxation';
+  } else if (activityLower.includes('sleep')) {
+    return isGaining ? 'Better health, cognitive function, and mood' : 'Cognitive decline, health issues, and mood problems';
+  }
+  
+  return isGaining ? 'Potential positive life impact' : 'Potential negative life impact';
+};
+
+// Calculate time value score (-100 to +100)
+const calculateTimeValue = (fromActivity: string, toActivity: string, hours: number, age: number): number => {
+  const fromScore = getActivityValueScore(fromActivity, age);
+  const toScore = getActivityValueScore(toActivity, age);
+  
+  const netScore = (toScore - fromScore) * (hours / 24) * 100; // Normalize to percentage scale
+  return Math.max(-100, Math.min(100, netScore));
+};
+
+// Get activity value score based on life phase
+const getActivityValueScore = (activityName: string, age: number): number => {
+  const activityLower = activityName.toLowerCase();
+  
+  // Age-based multipliers
+  const youthMultiplier = age < 30 ? 1.2 : age < 50 ? 1.0 : 0.8;
+  const middleAgeMultiplier = age >= 30 && age < 60 ? 1.2 : 1.0;
+  const seniorMultiplier = age >= 60 ? 1.2 : 1.0;
+  
+  if (activityLower.includes('exercise')) return 0.9 * (age > 40 ? 1.3 : 1.0);
+  if (activityLower.includes('career') || activityLower.includes('work')) return 0.8 * middleAgeMultiplier;
+  if (activityLower.includes('learning') || activityLower.includes('study')) return 0.85 * youthMultiplier;
+  if (activityLower.includes('family') || activityLower.includes('social')) return 0.75 * (age > 30 ? 1.2 : 1.0);
+  if (activityLower.includes('leisure') || activityLower.includes('entertainment')) return 0.4;
+  if (activityLower.includes('sleep')) return 0.95;
+  
+  return 0.5; // Default neutral value
+};
+
+// Generate reallocation recommendation
+const generateReallocationRecommendation = (fromActivity: string, toActivity: string, timeValue: number, age: number): string => {
+  if (timeValue > 50) {
+    return `Highly recommended: This reallocation aligns well with your life phase and priorities.`;
+  } else if (timeValue > 20) {
+    return `Recommended: This change could provide meaningful benefits for your current life stage.`;
+  } else if (timeValue > -20) {
+    return `Neutral: This reallocation has mixed benefits. Consider your personal priorities.`;
+  } else if (timeValue > -50) {
+    return `Caution: This change may not align with optimal time allocation for your age.`;
+  } else {
+    return `Not recommended: This reallocation could significantly impact your long-term wellbeing.`;
+  }
+};
+
+// Calculate confidence level
+const calculateConfidenceLevel = (fromActivity: string, toActivity: string, age: number): 'high' | 'medium' | 'low' => {
+  const wellStudiedActivities = ['exercise', 'sleep', 'work', 'learning'];
+  const fromStudied = wellStudiedActivities.some(activity => fromActivity.toLowerCase().includes(activity));
+  const toStudied = wellStudiedActivities.some(activity => toActivity.toLowerCase().includes(activity));
+  
+  if (fromStudied && toStudied) return 'high';
+  if (fromStudied || toStudied) return 'medium';
+  return 'low';
+};
+
+// Calculate potential ROI
+const calculatePotentialROI = (activityName: string, hours: number, age: number): string => {
+  const activityLower = activityName.toLowerCase();
+  
+  if (activityLower.includes('exercise')) {
+    const healthBenefit = hours * 365 * 3; // Rough health benefit multiplier
+    return `Potential ${healthBenefit.toFixed(0)} additional healthy days per year`;
+  } else if (activityLower.includes('learning') || activityLower.includes('skill')) {
+    const careerBoost = age < 40 ? 'significant' : age < 60 ? 'moderate' : 'personal satisfaction';
+    return `${careerBoost} career advancement potential`;
+  } else if (activityLower.includes('work') || activityLower.includes('career')) {
+    return hours > 2 ? 'Diminishing returns likely' : 'Potential career acceleration';
+  } else if (activityLower.includes('family') || activityLower.includes('social')) {
+    return 'Enhanced life satisfaction and emotional support';
+  }
+  
+  return 'Qualitative life improvement';
+};
+
+// Life phase optimization
+const calculateLifePhaseOptimization = (
+  currentAge: number,
+  activities: ActivityData[],
+  lifeExpectancy: number
+): {
+  currentPhase: string;
+  recommendations: {
+    phase: string;
+    ageRange: string;
+    priority: string;
+    suggestedAllocations: { activity: string; hours: number; reason: string }[];
+    keyFocus: string[];
+  }[];
+  transitionPlanning: {
+    nextPhase: string;
+    timeToTransition: number;
+    preparationSteps: string[];
+  };
+} => {
+  const currentPhase = determineLifePhase(currentAge);
+  const recommendations = generatePhaseRecommendations(currentAge, lifeExpectancy);
+  const transitionPlanning = calculateTransitionPlanning(currentAge, lifeExpectancy);
+  
+  return {
+    currentPhase,
+    recommendations,
+    transitionPlanning
+  };
+};
+
+// Determine current life phase
+const determineLifePhase = (age: number): string => {
+  if (age < 25) return 'Foundation Building';
+  if (age < 35) return 'Career Establishment';
+  if (age < 45) return 'Growth & Family';
+  if (age < 55) return 'Peak Performance';
+  if (age < 65) return 'Transition Planning';
+  return 'Legacy & Fulfillment';
+};
+
+// Generate phase-specific recommendations
+const generatePhaseRecommendations = (currentAge: number, lifeExpectancy: number) => {
+  const phases = [
+    {
+      phase: 'Foundation Building',
+      ageRange: '18-25',
+      priority: 'Learning & Skill Development',
+      suggestedAllocations: [
+        { activity: 'Learning/Study', hours: 4, reason: 'Build foundational knowledge and skills' },
+        { activity: 'Exercise', hours: 1.5, reason: 'Establish healthy habits early' },
+        { activity: 'Social Time', hours: 3, reason: 'Build lifelong relationships and network' },
+        { activity: 'Work/Internships', hours: 6, reason: 'Gain practical experience' }
+      ],
+      keyFocus: ['Education completion', 'Habit formation', 'Network building', 'Self-discovery']
+    },
+    {
+      phase: 'Career Establishment',
+      ageRange: '25-35',
+      priority: 'Professional Growth & Relationships',
+      suggestedAllocations: [
+        { activity: 'Work/Career', hours: 8, reason: 'Establish career trajectory' },
+        { activity: 'Learning/Skills', hours: 2, reason: 'Stay competitive and grow' },
+        { activity: 'Exercise', hours: 1.5, reason: 'Maintain health during busy period' },
+        { activity: 'Relationship/Family', hours: 3, reason: 'Build lasting partnerships' }
+      ],
+      keyFocus: ['Career advancement', 'Financial stability', 'Relationship building', 'Health maintenance']
+    },
+    {
+      phase: 'Growth & Family',
+      ageRange: '35-45',
+      priority: 'Balance & Family Development',
+      suggestedAllocations: [
+        { activity: 'Work/Career', hours: 7.5, reason: 'Peak earning potential' },
+        { activity: 'Family Time', hours: 4, reason: 'Child development critical period' },
+        { activity: 'Exercise', hours: 1.5, reason: 'Counter sedentary work lifestyle' },
+        { activity: 'Personal Time', hours: 2, reason: 'Prevent burnout and maintain identity' }
+      ],
+      keyFocus: ['Family development', 'Career peak', 'Financial growth', 'Work-life balance']
+    },
+    {
+      phase: 'Peak Performance',
+      ageRange: '45-55',
+      priority: 'Leadership & Wealth Building',
+      suggestedAllocations: [
+        { activity: 'Work/Leadership', hours: 7, reason: 'Maximum impact and influence' },
+        { activity: 'Exercise', hours: 2, reason: 'Combat age-related health decline' },
+        { activity: 'Family/Mentoring', hours: 3, reason: 'Guide next generation' },
+        { activity: 'Learning/Growth', hours: 2, reason: 'Stay relevant and adaptable' }
+      ],
+      keyFocus: ['Leadership development', 'Wealth accumulation', 'Health preservation', 'Legacy building']
+    },
+    {
+      phase: 'Transition Planning',
+      ageRange: '55-65',
+      priority: 'Preparation & Health Focus',
+      suggestedAllocations: [
+        { activity: 'Work/Transition', hours: 6, reason: 'Prepare for retirement transition' },
+        { activity: 'Exercise/Health', hours: 2.5, reason: 'Invest in long-term health' },
+        { activity: 'Hobbies/Interests', hours: 3, reason: 'Develop retirement activities' },
+        { activity: 'Family/Relationships', hours: 3, reason: 'Strengthen support systems' }
+      ],
+      keyFocus: ['Retirement planning', 'Health optimization', 'Interest development', 'Relationship deepening']
+    },
+    {
+      phase: 'Legacy & Fulfillment',
+      ageRange: '65+',
+      priority: 'Health & Contribution',
+      suggestedAllocations: [
+        { activity: 'Exercise/Health', hours: 3, reason: 'Maintain independence and vitality' },
+        { activity: 'Hobbies/Interests', hours: 4, reason: 'Pursue lifelong passions' },
+        { activity: 'Family/Community', hours: 4, reason: 'Share wisdom and stay connected' },
+        { activity: 'Rest/Relaxation', hours: 2, reason: 'Enjoy well-earned leisure' }
+      ],
+      keyFocus: ['Health maintenance', 'Purpose fulfillment', 'Wisdom sharing', 'Enjoyment']
+    }
+  ];
+  
+  return phases;
+};
+
+// Calculate transition planning
+const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: number) => {
+  let nextPhase = '';
+  let timeToTransition = 0;
+  let preparationSteps: string[] = [];
+  
+  if (currentAge < 25) {
+    nextPhase = 'Career Establishment';
+    timeToTransition = 25 - currentAge;
+    preparationSteps = [
+      'Complete education and certifications',
+      'Build professional network',
+      'Develop core skills in chosen field',
+      'Gain internship or entry-level experience'
+    ];
+  } else if (currentAge < 35) {
+    nextPhase = 'Growth & Family';
+    timeToTransition = 35 - currentAge;
+    preparationSteps = [
+      'Achieve financial stability',
+      'Develop leadership skills',
+      'Consider family planning',
+      'Build emergency fund and investments'
+    ];
+  } else if (currentAge < 45) {
+    nextPhase = 'Peak Performance';
+    timeToTransition = 45 - currentAge;
+    preparationSteps = [
+      'Develop expertise and specialization',
+      'Build wealth and assets',
+      'Strengthen family relationships',
+      'Focus on health and fitness'
+    ];
+  } else if (currentAge < 55) {
+    nextPhase = 'Transition Planning';
+    timeToTransition = 55 - currentAge;
+    preparationSteps = [
+      'Maximize earning potential',
+      'Develop leadership and mentoring skills',
+      'Diversify investments',
+      'Maintain health and energy'
+    ];
+  } else if (currentAge < 65) {
+    nextPhase = 'Legacy & Fulfillment';
+    timeToTransition = 65 - currentAge;
+    preparationSteps = [
+      'Plan retirement finances',
+      'Develop post-career interests',
+      'Focus on health optimization',
+      'Strengthen family and social connections'
+    ];
+  } else {
+    nextPhase = 'Continued Fulfillment';
+    timeToTransition = lifeExpectancy - currentAge;
+    preparationSteps = [
+      'Maintain physical and mental health',
+      'Stay engaged with community',
+      'Share knowledge and experience',
+      'Focus on meaningful relationships'
+    ];
+  }
+  
+  return {
+    nextPhase,
+    timeToTransition,
+    preparationSteps
+  };
+};
+
 // Activity comparisons - predefined for default activities
 const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: number) => string}>> = {
   'Sleep': [
@@ -597,6 +1100,14 @@ const LifeVisualizer: React.FC = () => {
   const [suggestionMessage, setSuggestionMessage] = useState('');
   const [suggestedActivities, setSuggestedActivities] = useState<ActivityData[]>([]);
 
+  // State for advanced analytics
+  const [analyticsData, setAnalyticsData] = useState<{
+    trendAnalysis: any[];
+    costBenefitAnalysis: any[];
+    lifePhaseOptimization: any;
+  } | null>(null);
+  const [selectedAnalyticsTab, setSelectedAnalyticsTab] = useState<'trends' | 'cost-benefit' | 'life-phases'>('trends');
+
   // Effect to trigger smart suggestions when inputs change
   useEffect(() => {
     if (birthdate && country) {
@@ -625,6 +1136,103 @@ const LifeVisualizer: React.FC = () => {
       description: "Your daily activities have been updated based on our suggestions.",
     });
   };
+
+  // Calculate advanced analytics when visualization result changes
+  useEffect(() => {
+    if (!visualizeResult) return;
+
+    try {
+      const currentAge = visualizeResult.age;
+      const lifeExpectancy = visualizeResult.lifeExpectancy;
+      const activities = visualizeResult.activityStats;
+
+      // Calculate trend analysis for each activity with small changes
+      const trendAnalysis = activities.map(activity => {
+        const changeOptions = [-1, -0.5, 0.5, 1]; // Hours to add/remove
+        const trends = changeOptions.map(change => ({
+          change,
+          analysis: calculateTrendAnalysis(
+            { id: '', name: activity.name, hours: activity.years * 24 / (lifeExpectancy - 18), icon: activity.icon, color: activity.color },
+            change,
+            { start: currentAge, end: lifeExpectancy },
+            currentAge
+          )
+        }));
+        
+        return {
+          activity: activity.name,
+          currentHours: (activity.years * 24 / (lifeExpectancy - 18)).toFixed(1),
+          trends,
+          icon: activity.icon,
+          color: activity.color
+        };
+      });
+
+      // Calculate cost-benefit analysis for common reallocations
+      const costBenefitAnalysis = [];
+      for (let i = 0; i < activities.length; i++) {
+        for (let j = 0; j < activities.length; j++) {
+          if (i !== j) {
+            const fromActivity = {
+              id: '', 
+              name: activities[i].name, 
+              hours: activities[i].years * 24 / (lifeExpectancy - 18),
+              icon: activities[i].icon,
+              color: activities[i].color
+            };
+            const toActivity = {
+              id: '', 
+              name: activities[j].name, 
+              hours: activities[j].years * 24 / (lifeExpectancy - 18),
+              icon: activities[j].icon,
+              color: activities[j].color
+            };
+            
+            const analysis = calculateCostBenefitAnalysis(
+              fromActivity,
+              toActivity,
+              0.5, // 30 minutes reallocation
+              currentAge,
+              lifeExpectancy
+            );
+            
+            costBenefitAnalysis.push({
+              from: activities[i].name,
+              to: activities[j].name,
+              analysis,
+              fromColor: activities[i].color,
+              toColor: activities[j].color
+            });
+          }
+        }
+      }
+
+      // Calculate life phase optimization
+      const activityData = activities.map(activity => ({
+        id: '',
+        name: activity.name,
+        hours: activity.years * 24 / (lifeExpectancy - 18),
+        icon: activity.icon,
+        color: activity.color
+      }));
+      
+      const lifePhaseOptimization = calculateLifePhaseOptimization(
+        currentAge,
+        activityData,
+        lifeExpectancy
+      );
+
+      setAnalyticsData({
+        trendAnalysis,
+        costBenefitAnalysis: costBenefitAnalysis.slice(0, 8), // Limit to top 8 for UI performance
+        lifePhaseOptimization
+      });
+
+    } catch (error) {
+      console.error('Error calculating analytics:', error);
+      setAnalyticsData(null);
+    }
+  }, [visualizeResult]);
 
   // Add manual life expectancy state
   const [manualLifeExpectancy, setManualLifeExpectancy] = useState<string>('');
@@ -1988,6 +2596,219 @@ const LifeVisualizer: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Advanced Analytics Section */}
+                {analyticsData && (
+                  <div className="mt-8">
+                    <Card className="transition-all duration-300">
+                      <CardHeader>
+                        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
+                          Advanced Analytics
+                        </CardTitle>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <button
+                            onClick={() => setSelectedAnalyticsTab('trends')}
+                            className={`px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-all ${
+                              selectedAnalyticsTab === 'trends'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            data-testid="tab-trends"
+                          >
+                            Trend Analysis
+                          </button>
+                          <button
+                            onClick={() => setSelectedAnalyticsTab('cost-benefit')}
+                            className={`px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-all ${
+                              selectedAnalyticsTab === 'cost-benefit'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            data-testid="tab-cost-benefit"
+                          >
+                            Cost-Benefit Analysis
+                          </button>
+                          <button
+                            onClick={() => setSelectedAnalyticsTab('life-phases')}
+                            className={`px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-all ${
+                              selectedAnalyticsTab === 'life-phases'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            data-testid="tab-life-phases"
+                          >
+                            Life Phase Optimization
+                          </button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {selectedAnalyticsTab === 'trends' && (
+                          <div className="space-y-6">
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                              See how small daily changes compound over your lifetime. Each hour adjustment shows the total impact over your remaining years.
+                            </div>
+                            {analyticsData.trendAnalysis.map((item, index) => (
+                              <div key={index} className="border rounded-lg p-4 space-y-4">
+                                <div className="flex items-center gap-3">
+                                  <div 
+                                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                                    style={{ backgroundColor: item.color }}
+                                  >
+                                    <i className={`fas ${item.icon} text-white text-sm`}></i>
+                                  </div>
+                                  <h3 className="text-lg font-semibold">{item.activity}</h3>
+                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    Currently {item.currentHours}h/day
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                  {item.trends.map((trend: any, trendIndex: number) => (
+                                    <div 
+                                      key={trendIndex} 
+                                      className={`p-3 rounded-md border ${
+                                        trend.change > 0 
+                                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                                          : trend.change < 0
+                                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                                          : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                      }`}
+                                    >
+                                      <div className="text-xs font-medium mb-1">
+                                        {trend.change > 0 ? '+' : ''}{trend.change}h/day
+                                      </div>
+                                      <div className="text-sm font-semibold">
+                                        {trend.analysis.compoundEffect > 0 ? '+' : ''}
+                                        {trend.analysis.compoundEffect.toFixed(1)} years over lifetime
+                                      </div>
+                                      {trend.analysis.recommendations.length > 0 && (
+                                        <div className="text-xs mt-2 opacity-75">
+                                          {trend.analysis.recommendations[0]}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {selectedAnalyticsTab === 'cost-benefit' && (
+                          <div className="space-y-6">
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                              Analysis of reallocating 30 minutes daily between activities. Green indicates beneficial trades, red indicates potentially harmful ones.
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                              {analyticsData.costBenefitAnalysis
+                                .sort((a, b) => b.analysis.netImpact.timeValue - a.analysis.netImpact.timeValue)
+                                .map((item, index) => (
+                                <div 
+                                  key={index} 
+                                  className={`p-4 rounded-lg border transition-all hover:shadow-sm ${
+                                    item.analysis.netImpact.timeValue > 20 
+                                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                      : item.analysis.netImpact.timeValue < -20
+                                      ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-2 py-1 bg-white dark:bg-gray-900 rounded text-xs font-medium" style={{ color: item.fromColor }}>
+                                        -{item.from}
+                                      </span>
+                                      <span className="text-gray-400">→</span>
+                                      <span className="px-2 py-1 bg-white dark:bg-gray-900 rounded text-xs font-medium" style={{ color: item.toColor }}>
+                                        +{item.to}
+                                      </span>
+                                    </div>
+                                    <div className={`text-xs font-bold px-2 py-1 rounded ${
+                                      item.analysis.netImpact.confidence === 'high' ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200' :
+                                      item.analysis.netImpact.confidence === 'medium' ? 'bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200' :
+                                      'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
+                                    }`}>
+                                      {item.analysis.netImpact.confidence} confidence
+                                    </div>
+                                  </div>
+                                  <div className="text-sm font-medium mb-2">
+                                    Time Value Score: {item.analysis.netImpact.timeValue.toFixed(0)}/100
+                                  </div>
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    {item.analysis.netImpact.recommendation}
+                                  </div>
+                                  <div className="text-xs">
+                                    <div className="mb-1"><strong>Gain:</strong> {item.analysis.benefit.qualitativeImpact}</div>
+                                    <div><strong>Cost:</strong> {item.analysis.opportunityCost.qualitativeImpact}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedAnalyticsTab === 'life-phases' && (
+                          <div className="space-y-6">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                                Current Life Phase: {analyticsData.lifePhaseOptimization.currentPhase}
+                              </h3>
+                              <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                                <p>
+                                  <strong>Next Phase:</strong> {analyticsData.lifePhaseOptimization.transitionPlanning.nextPhase} 
+                                  <span className="ml-2 text-xs">
+                                    (in {analyticsData.lifePhaseOptimization.transitionPlanning.timeToTransition.toFixed(0)} years)
+                                  </span>
+                                </p>
+                                <div>
+                                  <strong>Preparation Steps:</strong>
+                                  <ul className="list-disc list-inside mt-1 space-y-1">
+                                    {analyticsData.lifePhaseOptimization.transitionPlanning.preparationSteps.slice(0, 3).map((step: string, index: number) => (
+                                      <li key={index} className="text-xs">{step}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                              {analyticsData.lifePhaseOptimization.recommendations.slice(0, 4).map((phase: any, index: number) => (
+                                <div key={index} className="p-4 border rounded-lg space-y-3">
+                                  <div>
+                                    <h4 className="font-semibold">{phase.phase}</h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{phase.ageRange}</p>
+                                    <p className="text-sm text-primary font-medium">{phase.priority}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium mb-2">Suggested Time Allocation:</p>
+                                    <div className="space-y-1">
+                                      {phase.suggestedAllocations.slice(0, 3).map((allocation: any, allocIndex: number) => (
+                                        <div key={allocIndex} className="flex justify-between text-xs">
+                                          <span>{allocation.activity}</span>
+                                          <span className="font-medium">{allocation.hours}h</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium mb-1">Key Focus Areas:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {phase.keyFocus.slice(0, 3).map((focus: string, focusIndex: number) => (
+                                        <span key={focusIndex} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                                          {focus}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
                 
                 {(exerciseOptimization || sleepOptimization) && (
                   <div className="mt-8">
