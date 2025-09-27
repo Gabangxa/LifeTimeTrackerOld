@@ -91,6 +91,7 @@ const formSchema = z.object({
     message: "Please enter a valid birthdate in the past"
   }),
   country: z.string().min(1, "Please select a country"),
+  profession: z.string().optional(),
   activities: z.array(
     z.object({
       id: z.string(),
@@ -121,6 +122,133 @@ const DEFAULT_ACTIVITIES: ActivityData[] = [
   { id: uuidv4(), name: 'Work', hours: 8, icon: 'fa-briefcase', color: '#10B981' },
   { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#8B5CF6' },
 ];
+
+// Lifestyle templates for smart onboarding
+const LIFESTYLE_TEMPLATES: Record<string, ActivityData[]> = {
+  student: [
+    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Study', hours: 6, icon: 'fa-graduation-cap', color: '#10B981' },
+    { id: uuidv4(), name: 'Classes', hours: 4, icon: 'fa-chalkboard', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Social Time', hours: 2, icon: 'fa-users', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+  ],
+  parent: [
+    { id: uuidv4(), name: 'Sleep', hours: 6, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Work', hours: 8, icon: 'fa-briefcase', color: '#10B981' },
+    { id: uuidv4(), name: 'Childcare', hours: 4, icon: 'fa-baby', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Household', hours: 2, icon: 'fa-home', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Family Time', hours: 2, icon: 'fa-heart', color: '#EF4444' },
+  ],
+  freelancer: [
+    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Client Work', hours: 6, icon: 'fa-laptop', color: '#10B981' },
+    { id: uuidv4(), name: 'Business Development', hours: 2, icon: 'fa-chart-line', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Learning/Skills', hours: 2, icon: 'fa-book', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+  ],
+  retiree: [
+    { id: uuidv4(), name: 'Sleep', hours: 8, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Hobbies', hours: 4, icon: 'fa-paint-brush', color: '#10B981' },
+    { id: uuidv4(), name: 'Social Activities', hours: 3, icon: 'fa-users', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Exercise', hours: 2, icon: 'fa-dumbbell', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Family Time', hours: 2, icon: 'fa-heart', color: '#EF4444' },
+  ],
+  'office-worker': [
+    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Work', hours: 8, icon: 'fa-briefcase', color: '#10B981' },
+    { id: uuidv4(), name: 'Commute', hours: 2, icon: 'fa-car', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Leisure', hours: 3, icon: 'fa-tv', color: '#EF4444' },
+  ],
+  entrepreneur: [
+    { id: uuidv4(), name: 'Sleep', hours: 6, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Business Work', hours: 10, icon: 'fa-rocket', color: '#10B981' },
+    { id: uuidv4(), name: 'Networking', hours: 2, icon: 'fa-handshake', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Learning', hours: 2, icon: 'fa-book', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+  ],
+  'healthcare-worker': [
+    { id: uuidv4(), name: 'Sleep', hours: 6, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Work', hours: 10, icon: 'fa-user-md', color: '#10B981' },
+    { id: uuidv4(), name: 'Commute', hours: 1, icon: 'fa-car', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Rest/Recovery', hours: 3, icon: 'fa-couch', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+  ],
+  teacher: [
+    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Teaching', hours: 6, icon: 'fa-chalkboard-teacher', color: '#10B981' },
+    { id: uuidv4(), name: 'Lesson Planning', hours: 2, icon: 'fa-clipboard-list', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Grading', hours: 2, icon: 'fa-pen', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Personal Time', hours: 3, icon: 'fa-coffee', color: '#EF4444' },
+  ],
+};
+
+// Profession options for the dropdown
+const PROFESSION_OPTIONS = [
+  { value: 'student', label: 'Student' },
+  { value: 'parent', label: 'Parent/Caregiver' },
+  { value: 'freelancer', label: 'Freelancer' },
+  { value: 'retiree', label: 'Retiree' },
+  { value: 'office-worker', label: 'Office Worker' },
+  { value: 'entrepreneur', label: 'Entrepreneur' },
+  { value: 'healthcare-worker', label: 'Healthcare Worker' },
+  { value: 'teacher', label: 'Teacher/Educator' },
+  { value: 'other', label: 'Other' },
+];
+
+// Smart suggestion logic based on user inputs
+const getSuggestedTemplate = (age: number, country: string, profession?: string): ActivityData[] => {
+  // If profession is explicitly selected, use that template
+  if (profession && profession !== 'other' && LIFESTYLE_TEMPLATES[profession]) {
+    return LIFESTYLE_TEMPLATES[profession].map(activity => ({
+      ...activity,
+      id: uuidv4(), // Generate new IDs to avoid conflicts
+    }));
+  }
+
+  // Age-based suggestions
+  if (age < 25) {
+    return LIFESTYLE_TEMPLATES.student.map(activity => ({
+      ...activity,
+      id: uuidv4(),
+    }));
+  } else if (age >= 65) {
+    return LIFESTYLE_TEMPLATES.retiree.map(activity => ({
+      ...activity,
+      id: uuidv4(),
+    }));
+  } else if (age >= 25 && age < 45) {
+    // Working age - suggest office worker template
+    return LIFESTYLE_TEMPLATES['office-worker'].map(activity => ({
+      ...activity,
+      id: uuidv4(),
+    }));
+  } else {
+    // Middle age - could be parent or established professional
+    return LIFESTYLE_TEMPLATES.parent.map(activity => ({
+      ...activity,
+      id: uuidv4(),
+    }));
+  }
+};
+
+// Get recommendation message based on inputs
+const getRecommendationMessage = (age: number, profession?: string): string => {
+  if (profession && profession !== 'other') {
+    const professionLabel = PROFESSION_OPTIONS.find(p => p.value === profession)?.label || profession;
+    return `Based on your profession as a ${professionLabel.toLowerCase()}, we've suggested a typical daily schedule.`;
+  }
+
+  if (age < 25) {
+    return "Based on your age, we've suggested a student-focused schedule.";
+  } else if (age >= 65) {
+    return "Based on your age, we've suggested a retirement lifestyle schedule.";
+  } else if (age >= 25 && age < 45) {
+    return "Based on your age, we've suggested a working professional schedule.";
+  } else {
+    return "Based on your age, we've suggested a family-oriented schedule.";
+  }
+};
 
 // Activity comparisons - predefined for default activities
 const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: number) => string}>> = {
@@ -373,12 +501,50 @@ const LifeVisualizer: React.FC = () => {
     defaultValues: {
       birthdate: '',
       country: '',
+      profession: '',
       activities: DEFAULT_ACTIVITIES,
     },
   });
   
   // Watch activities array to ensure UI updates when it changes
   const activities = form.watch('activities');
+  const birthdate = form.watch('birthdate');
+  const country = form.watch('country');
+  const profession = form.watch('profession');
+
+  // State for managing smart suggestions
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [suggestionMessage, setSuggestionMessage] = useState('');
+  const [suggestedActivities, setSuggestedActivities] = useState<ActivityData[]>([]);
+
+  // Effect to trigger smart suggestions when inputs change
+  useEffect(() => {
+    if (birthdate && country) {
+      const birthdateObj = new Date(birthdate);
+      const age = calculateAge(birthdateObj);
+      
+      if (age > 0) {
+        const suggested = getSuggestedTemplate(age, country, profession);
+        const message = getRecommendationMessage(age, profession);
+        
+        setSuggestedActivities(suggested);
+        setSuggestionMessage(message);
+        setShowSuggestion(true);
+      }
+    } else {
+      setShowSuggestion(false);
+    }
+  }, [birthdate, country, profession]);
+
+  // Function to apply suggested activities
+  const applySuggestedActivities = () => {
+    form.setValue('activities', suggestedActivities);
+    setShowSuggestion(false);
+    toast({
+      title: "Activities updated",
+      description: "Your daily activities have been updated based on our suggestions.",
+    });
+  };
 
   // Add manual life expectancy state
   const [manualLifeExpectancy, setManualLifeExpectancy] = useState<string>('');
@@ -1851,7 +2017,7 @@ const LifeVisualizer: React.FC = () => {
                                   ? 'text-green-600 dark:text-green-400'
                                   : 'text-red-600 dark:text-red-400'
                               }`}>
-                                Potential lifespan impact: {sleepOptimization.yearsImpact > 0 ? '+' : ''}{sleepOptimization.yearsImpact} years
+                                Potential lifespan impact: {parseFloat(sleepOptimization.yearsImpact) > 0 ? '+' : ''}{sleepOptimization.yearsImpact} years
                               </p>
                             )}
                           </div>
