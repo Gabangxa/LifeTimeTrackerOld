@@ -196,58 +196,136 @@ const PROFESSION_OPTIONS = [
   { value: 'other', label: 'Other' },
 ];
 
+// Country-specific work culture and lifestyle adjustments
+const getCountryAdjustments = (country: string) => {
+  // Work culture adjustments based on country
+  const workIntensiveCountries = ['JP', 'KR', 'SG', 'CN']; // Japan, South Korea, Singapore, China
+  const workLifeBalanceCountries = ['SE', 'DK', 'NO', 'NL', 'DE', 'FR']; // Scandinavian and Western European
+  const longCommuteCountries = ['US', 'BR', 'IN', 'ID', 'PH']; // Countries with typically longer commutes
+  
+  return {
+    hasLongWorkHours: workIntensiveCountries.includes(country),
+    hasWorkLifeBalance: workLifeBalanceCountries.includes(country),
+    hasLongCommute: longCommuteCountries.includes(country),
+  };
+};
+
 // Smart suggestion logic based on user inputs
 const getSuggestedTemplate = (age: number, country: string, profession?: string): ActivityData[] => {
+  const countryAdjustments = getCountryAdjustments(country);
+  
+  // Start with base template
+  let baseTemplate: ActivityData[];
+  
   // If profession is explicitly selected, use that template
   if (profession && profession !== 'other' && LIFESTYLE_TEMPLATES[profession]) {
-    return LIFESTYLE_TEMPLATES[profession].map(activity => ({
-      ...activity,
-      id: uuidv4(), // Generate new IDs to avoid conflicts
-    }));
-  }
-
-  // Age-based suggestions
-  if (age < 25) {
-    return LIFESTYLE_TEMPLATES.student.map(activity => ({
-      ...activity,
-      id: uuidv4(),
-    }));
-  } else if (age >= 65) {
-    return LIFESTYLE_TEMPLATES.retiree.map(activity => ({
-      ...activity,
-      id: uuidv4(),
-    }));
-  } else if (age >= 25 && age < 45) {
-    // Working age - suggest office worker template
-    return LIFESTYLE_TEMPLATES['office-worker'].map(activity => ({
-      ...activity,
-      id: uuidv4(),
-    }));
+    baseTemplate = LIFESTYLE_TEMPLATES[profession];
   } else {
-    // Middle age - could be parent or established professional
-    return LIFESTYLE_TEMPLATES.parent.map(activity => ({
-      ...activity,
-      id: uuidv4(),
-    }));
+    // Age-based suggestions
+    if (age < 25) {
+      baseTemplate = LIFESTYLE_TEMPLATES.student;
+    } else if (age >= 65) {
+      baseTemplate = LIFESTYLE_TEMPLATES.retiree;
+    } else if (age >= 25 && age < 45) {
+      baseTemplate = LIFESTYLE_TEMPLATES['office-worker'];
+    } else {
+      baseTemplate = LIFESTYLE_TEMPLATES.parent;
+    }
   }
+  
+  // Apply country-specific adjustments
+  const adjustedTemplate = baseTemplate.map(activity => {
+    let adjustedActivity = { ...activity, id: uuidv4() };
+    
+    // Adjust work hours based on country culture
+    if (activity.name.toLowerCase().includes('work') || activity.name.toLowerCase().includes('business')) {
+      if (countryAdjustments.hasLongWorkHours) {
+        adjustedActivity.hours = Math.min(24, adjustedActivity.hours + 1); // Add 1 hour for work-intensive countries
+      } else if (countryAdjustments.hasWorkLifeBalance) {
+        adjustedActivity.hours = Math.max(1, adjustedActivity.hours - 1); // Reduce 1 hour for work-life balance countries
+      }
+    }
+    
+    // Adjust sleep based on work culture
+    if (activity.name.toLowerCase().includes('sleep')) {
+      if (countryAdjustments.hasLongWorkHours) {
+        adjustedActivity.hours = Math.max(5, adjustedActivity.hours - 1); // Less sleep in work-intensive countries
+      } else if (countryAdjustments.hasWorkLifeBalance) {
+        adjustedActivity.hours = Math.min(9, adjustedActivity.hours + 0.5); // More sleep in balanced countries
+      }
+    }
+    
+    return adjustedActivity;
+  }).filter(activity => activity.hours > 0);
+  
+  // Add commute if applicable and not already present
+  const hasCommute = adjustedTemplate.some(activity => 
+    activity.name.toLowerCase().includes('commute')
+  );
+  
+  if (!hasCommute && countryAdjustments.hasLongCommute && age >= 18 && age < 65) {
+    const commuteHours = countryAdjustments.hasLongCommute ? 2.5 : 1;
+    adjustedTemplate.push({
+      id: uuidv4(),
+      name: 'Commute',
+      hours: commuteHours,
+      icon: 'fa-car',
+      color: '#F59E0B'
+    });
+    
+    // Reduce leisure time to accommodate commute
+    const leisureIndex = adjustedTemplate.findIndex(activity => 
+      activity.name.toLowerCase().includes('leisure') || 
+      activity.name.toLowerCase().includes('personal')
+    );
+    if (leisureIndex !== -1) {
+      adjustedTemplate[leisureIndex].hours = Math.max(1, adjustedTemplate[leisureIndex].hours - commuteHours);
+    }
+  }
+  
+  // Ensure total hours don't exceed 24
+  const totalHours = adjustedTemplate.reduce((sum, activity) => sum + activity.hours, 0);
+  if (totalHours > 24) {
+    const excessHours = totalHours - 24;
+    // Proportionally reduce all activities
+    return adjustedTemplate.map(activity => ({
+      ...activity,
+      hours: Math.max(0.5, activity.hours - (activity.hours / totalHours) * excessHours)
+    })).filter(activity => activity.hours >= 0.5);
+  }
+  
+  return adjustedTemplate;
 };
 
 // Get recommendation message based on inputs
-const getRecommendationMessage = (age: number, profession?: string): string => {
+const getRecommendationMessage = (age: number, country: string, profession?: string): string => {
+  const countryAdjustments = getCountryAdjustments(country);
+  let baseMessage = '';
+  
   if (profession && profession !== 'other') {
     const professionLabel = PROFESSION_OPTIONS.find(p => p.value === profession)?.label || profession;
-    return `Based on your profession as a ${professionLabel.toLowerCase()}, we've suggested a typical daily schedule.`;
-  }
-
-  if (age < 25) {
-    return "Based on your age, we've suggested a student-focused schedule.";
+    baseMessage = `Based on your profession as a ${professionLabel.toLowerCase()}`;
+  } else if (age < 25) {
+    baseMessage = "Based on your age, we've suggested a student-focused schedule";
   } else if (age >= 65) {
-    return "Based on your age, we've suggested a retirement lifestyle schedule.";
+    baseMessage = "Based on your age, we've suggested a retirement lifestyle schedule";
   } else if (age >= 25 && age < 45) {
-    return "Based on your age, we've suggested a working professional schedule.";
+    baseMessage = "Based on your age, we've suggested a working professional schedule";
   } else {
-    return "Based on your age, we've suggested a family-oriented schedule.";
+    baseMessage = "Based on your age, we've suggested a family-oriented schedule";
   }
+  
+  // Add country-specific context
+  let countryContext = '';
+  if (countryAdjustments.hasLongWorkHours) {
+    countryContext = ' and adjusted for the intensive work culture in your country';
+  } else if (countryAdjustments.hasWorkLifeBalance) {
+    countryContext = ' and adjusted for the work-life balance culture in your country';
+  } else if (countryAdjustments.hasLongCommute) {
+    countryContext = ' and included typical commute time for your country';
+  }
+  
+  return baseMessage + countryContext + '.';
 };
 
 // Activity comparisons - predefined for default activities
@@ -525,7 +603,7 @@ const LifeVisualizer: React.FC = () => {
       
       if (age > 0) {
         const suggested = getSuggestedTemplate(age, country, profession);
-        const message = getRecommendationMessage(age, profession);
+        const message = getRecommendationMessage(age, country, profession);
         
         setSuggestedActivities(suggested);
         setSuggestionMessage(message);
@@ -1320,6 +1398,81 @@ const LifeVisualizer: React.FC = () => {
                         </FormItem>
                       )}
                     />
+                    
+                    <FormField
+                      control={form.control}
+                      name="profession"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Profession/Lifestyle (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-profession">
+                                <SelectValue placeholder="Select your profession or lifestyle" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {PROFESSION_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Smart Suggestions */}
+                    {showSuggestion && (
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-0.5">
+                            <i className="fas fa-lightbulb text-blue-600 dark:text-blue-400"></i>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                              Smart Activity Suggestions
+                            </h4>
+                            <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                              {suggestionMessage}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {suggestedActivities.map((activity, index) => (
+                                <span 
+                                  key={index}
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 text-xs rounded-md"
+                                >
+                                  <i className={`fas ${activity.icon} text-xs`}></i>
+                                  {activity.name} ({activity.hours}h)
+                                </span>
+                              ))}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                onClick={applySuggestedActivities}
+                                data-testid="button-apply-suggestions"
+                              >
+                                Apply Suggestions
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowSuggestion(false)}
+                                data-testid="button-dismiss-suggestions"
+                              >
+                                Dismiss
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Manual Life Expectancy */}
                     <div className="space-y-2">
