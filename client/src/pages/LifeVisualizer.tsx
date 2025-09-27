@@ -18,7 +18,9 @@ import {
   AlertCircle,
   ArrowUpRight,
   Share2,
-  Sparkles
+  Sparkles,
+  BarChart3,
+  PieChart
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -1784,24 +1786,24 @@ const LifeVisualizer: React.FC = () => {
                       
                       {/* Interactive Slider */}
                       <div className="mt-8">
-                        <div className="relative border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-4 mb-4 bg-blue-50/50 dark:bg-blue-900/20">
+                        <div className="relative border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-3 sm:p-4 mb-4 bg-blue-50/50 dark:bg-blue-900/20">
                           <div className="absolute -top-3 left-4 bg-white dark:bg-gray-900 px-2">
-                            <span className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                              <Hourglass className="w-4 h-4" />
+                            <span className="text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1 sm:gap-2">
+                              <Hourglass className="w-3 h-3 sm:w-4 sm:h-4" />
                               Interactive Timeline
                             </span>
                           </div>
-                          <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                          <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 font-medium">
                             Explore how time continues to pass:
                           </p>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2 sm:space-x-4">
                           <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Today</span>
                           <Slider 
                             defaultValue={[0]}
                             max={visualizeResult.weeksRemaining}
                             step={52} // Approximately 1 year
-                            className="flex-grow"
+                            className="flex-grow touch-none" // Improved touch handling
                             onValueChange={(value) => {
                               const weeksAdvanced = value[0];
                               setTimelineSliderValue(weeksAdvanced);
@@ -1842,8 +1844,8 @@ const LifeVisualizer: React.FC = () => {
                         </div>
                         <div className="mt-4 text-center space-y-2">
                           {projectedAge !== null && timelineSliderValue > 0 ? (
-                            <div className="py-2 px-4 bg-blue-50 dark:bg-blue-900/20 rounded-md inline-block border border-blue-200 dark:border-blue-800">
-                              <span className="text-sm">
+                            <div className="py-2 px-3 sm:px-4 bg-blue-50 dark:bg-blue-900/20 rounded-md inline-block border border-blue-200 dark:border-blue-800 transition-all duration-300">
+                              <span className="text-xs sm:text-sm">
                                 At age <span className="font-bold text-primary">{projectedAge.toFixed(1)}</span>, you'll have
                                 <span className="font-bold text-primary ml-1">
                                   {projectedStats ? projectedStats.daysRemaining.toFixed(0) : ((visualizeResult.lifeExpectancy - projectedAge) * 365).toFixed(0)} days
@@ -1851,9 +1853,9 @@ const LifeVisualizer: React.FC = () => {
                               </span>
                             </div>
                           ) : (
-                            <div className="py-2 px-4 bg-primary/10 dark:bg-primary/20 rounded-md inline-block">
-                              <span className="text-lg font-bold">{((visualizeResult.lifeExpectancy - visualizeResult.age) * 365).toFixed(0)}</span>
-                              <span className="ml-1 text-sm text-primary font-medium">days remaining</span>
+                            <div className="py-2 px-3 sm:px-4 bg-primary/10 dark:bg-primary/20 rounded-md inline-block transition-all duration-300">
+                              <span className="text-base sm:text-lg font-bold">{((visualizeResult.lifeExpectancy - visualizeResult.age) * 365).toFixed(0)}</span>
+                              <span className="ml-1 text-xs sm:text-sm text-primary font-medium">days remaining</span>
                             </div>
                           )}
                         </div>
@@ -1871,34 +1873,34 @@ const LifeVisualizer: React.FC = () => {
               visualizeResult.activityStats.length === 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : 
               visualizeResult.activityStats.length === 4 ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 
               visualizeResult.activityStats.length >= 5 ? 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' : ''
-            } gap-6 mb-8`}>
+            } gap-4 sm:gap-6 mb-8`}>
               {/* Use projected stats when available, otherwise use original stats */}
               {(projectedStats && timelineSliderValue > 0 ? projectedStats.activityStats : visualizeResult.activityStats).map((activity) => (
                 <Card key={activity.name} 
-                      className="overflow-hidden transition-all hover:shadow-md hover:-translate-y-1"
+                      className="overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 touch-none"
                       itemScope itemType="https://schema.org/QuantitativeValue"
                       itemProp="value">
-                  <div className="p-5" style={{ backgroundColor: `${activity.color}15` }}>
+                  <div className="p-4 sm:p-5" style={{ backgroundColor: `${activity.color}15` }}>
                     <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold" style={{ color: activity.color }}>
+                      <h3 className="text-base sm:text-lg font-semibold" style={{ color: activity.color }}>
                         {activity.name}
                       </h3>
                       <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: activity.color }}
                       >
-                        <i className={`fas ${activity.icon} text-white`}></i>
+                        <i className={`fas ${activity.icon} text-white text-sm sm:text-base`}></i>
                       </div>
                     </div>
                     <div className="mt-2">
-                      <p className="text-3xl font-bold">{activity.years.toFixed(1)} years</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-2xl sm:text-3xl font-bold transition-all duration-300">{activity.years.toFixed(1)} years</p>
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         {activity.percentage.toFixed(1)}% of your life 
                         {projectedStats && timelineSliderValue > 0 ? " at this age" : " so far"}
                       </p>
                       {/* Show change indicator if projecting into the future */}
                       {projectedStats && timelineSliderValue > 0 && (
-                        <div className="mt-1 text-xs font-medium text-green-600 dark:text-green-500 flex items-center">
+                        <div className="mt-1 text-xs font-medium text-green-600 dark:text-green-500 flex items-center transition-all duration-300">
                           <ArrowUpRight className="h-3 w-3 mr-1" />
                           From {visualizeResult.activityStats.find(a => a.name === activity.name)?.years.toFixed(1) || "0"} years
                         </div>
@@ -1926,41 +1928,58 @@ const LifeVisualizer: React.FC = () => {
             </div>
             
             {/* Future Projections */}
-            <Card>
+            <Card className="transition-all duration-300">
               <CardHeader>
-                <CardTitle>Future Projections</CardTitle>
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  Future Projections
+                  {projectedStats && timelineSliderValue > 0 && (
+                    <span className="text-xs sm:text-sm font-normal text-blue-600 dark:text-blue-400 transition-all duration-300">
+                      (Live Preview)
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2">
-                    <h3 className="text-lg font-medium mb-4">If You Continue Current Patterns</h3>
-                    <div className="h-64">
-                      <canvas ref={projectionChartRef}></canvas>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="lg:col-span-2 order-2 lg:order-1">
+                    <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">If You Continue Current Patterns</h3>
+                    <div className="h-48 sm:h-64 relative">
+                      <canvas 
+                        ref={projectionChartRef}
+                        className="w-full h-full"
+                      ></canvas>
+                      {/* Persistent indicator for timeline exploration */}
+                      {projectedStats && timelineSliderValue > 0 && (
+                        <div className="absolute top-2 right-2 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 px-2 py-1 rounded-full text-xs font-medium transition-all duration-300">
+                          Updated
+                        </div>
+                      )}
                     </div>
                   </div>
                   
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">
+                  <div className="order-1 lg:order-2">
+                    <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">
                       {projectedStats && timelineSliderValue > 0 ? 'Adjusted Time Remaining' : 'Time Remaining'}
                       {projectedStats && timelineSliderValue > 0 && (
-                        <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                        <span className="text-xs sm:text-sm font-normal text-gray-500 dark:text-gray-400 ml-2 transition-all duration-300">
                           at age {projectedAge?.toFixed(1)}
                         </span>
                       )}
                     </h3>
-                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <div className="space-y-3 sm:space-y-4 max-h-80 sm:max-h-96 overflow-y-auto pr-2">
                       {/* Use projected stats when available, otherwise use original stats */}
                       {(projectedStats && timelineSliderValue > 0 ? projectedStats.futureProjections : visualizeResult.futureProjections).map((projection) => (
-                        <div key={projection.activity} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                        <div key={projection.activity} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 transition-all duration-300 hover:shadow-sm">
+                          <h4 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1 sm:mb-2">
                             {projection.activity}
                           </h4>
-                          <p className="text-xl font-semibold">
+                          <p className="text-lg sm:text-xl font-semibold transition-all duration-300">
                             {projection.yearsRemaining.toFixed(1)} more years
                           </p>
                           {/* Show change indicator if projecting into the future */}
                           {projectedStats && timelineSliderValue > 0 && (
-                            <p className="text-xs mt-1 text-blue-600 dark:text-blue-400">
+                            <p className="text-xs mt-1 text-blue-600 dark:text-blue-400 transition-all duration-300">
                               {projection.yearsSoFar.toFixed(1)} years spent by this age
                             </p>
                           )}
