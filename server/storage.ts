@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, type UserLifeData, type InsertUserLifeData } from "@shared/schema";
+import { users, type User, type InsertUser, type UserLifeData, type InsertUserLifeData, type CountryLifeExpectancy, type InsertCountryLifeExpectancy } from "@shared/schema";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -9,19 +9,29 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   saveUserLifeData(data: InsertUserLifeData): Promise<UserLifeData>;
   getUserLifeData(id: number): Promise<UserLifeData | undefined>;
+  getCachedCountries(): Promise<any[]>;
+  cacheCountries(countries: any[]): Promise<void>;
+  getCachedLifeExpectancy(countryCode: string): Promise<CountryLifeExpectancy | undefined>;
+  cacheLifeExpectancy(data: InsertCountryLifeExpectancy): Promise<CountryLifeExpectancy>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private userLifeData: Map<number, UserLifeData>;
+  private countries: any[];
+  private lifeExpectancyCache: Map<string, CountryLifeExpectancy>;
   currentId: number;
   currentLifeDataId: number;
+  currentLifeExpectancyId: number;
 
   constructor() {
     this.users = new Map();
     this.userLifeData = new Map();
+    this.countries = [];
+    this.lifeExpectancyCache = new Map();
     this.currentId = 1;
     this.currentLifeDataId = 1;
+    this.currentLifeExpectancyId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -61,6 +71,28 @@ export class MemStorage implements IStorage {
   
   async getUserLifeData(id: number): Promise<UserLifeData | undefined> {
     return this.userLifeData.get(id);
+  }
+
+  async getCachedCountries(): Promise<any[]> {
+    return this.countries;
+  }
+
+  async cacheCountries(countries: any[]): Promise<void> {
+    this.countries = countries;
+  }
+
+  async getCachedLifeExpectancy(countryCode: string): Promise<CountryLifeExpectancy | undefined> {
+    return this.lifeExpectancyCache.get(countryCode);
+  }
+
+  async cacheLifeExpectancy(data: InsertCountryLifeExpectancy): Promise<CountryLifeExpectancy> {
+    const id = this.currentLifeExpectancyId++;
+    const lifeExpectancy: CountryLifeExpectancy = {
+      id,
+      ...data
+    };
+    this.lifeExpectancyCache.set(data.countryCode, lifeExpectancy);
+    return lifeExpectancy;
   }
 }
 
