@@ -1391,7 +1391,7 @@ const LifeVisualizer: React.FC = () => {
     
     // Calculate new activity stats
     const activityStats: ActivityStat[] = formData.activities.map(activity => {
-      const years = calculateActivityYears(activity.hours, projectedAliveDays);
+      const years = calculateActivityYears(activity.hours, projectedAliveDays, activity.daysPerWeek);
       const percentage = (years / projectedAge) * 100;
       
       // Generate comparisons based on the new values
@@ -1409,8 +1409,9 @@ const LifeVisualizer: React.FC = () => {
 
     // Calculate future projections
     const futureProjections = formData.activities.map(activity => {
-      const yearsSoFar = calculateActivityYears(activity.hours, projectedAliveDays);
-      const yearsRemaining = (activity.hours / 24) * 365 * (expectancy - projectedAge) / 365;
+      const yearsSoFar = calculateActivityYears(activity.hours, projectedAliveDays, activity.daysPerWeek);
+      const effectiveDailyHours = (activity.hours * activity.daysPerWeek) / 7;
+      const yearsRemaining = (effectiveDailyHours / 24) * (expectancy - projectedAge);
       
       return {
         activity: activity.name,
@@ -1419,14 +1420,16 @@ const LifeVisualizer: React.FC = () => {
       };
     });
 
-    // Calculate free time
-    const dailyActivitiesHours = formData.activities.reduce((sum, activity) => sum + activity.hours, 0);
+    // Calculate free time using effective daily hours
+    const dailyActivitiesHours = formData.activities.reduce((sum, activity) => {
+      return sum + (activity.hours * activity.daysPerWeek) / 7;
+    }, 0);
     const freeHoursDaily = Math.max(0, 24 - dailyActivitiesHours);
     
     futureProjections.push({
       activity: 'Free Time',
-      yearsSoFar: calculateActivityYears(freeHoursDaily, projectedAliveDays),
-      yearsRemaining: (freeHoursDaily / 24) * 365 * (expectancy - projectedAge) / 365
+      yearsSoFar: calculateActivityYears(freeHoursDaily, projectedAliveDays, 7),
+      yearsRemaining: (freeHoursDaily / 24) * (expectancy - projectedAge)
     });
 
     return {
@@ -1438,12 +1441,14 @@ const LifeVisualizer: React.FC = () => {
 
   // Visualize data
   const visualizeData = (data: FormData) => {
-    // Check if total activity hours exceed 24
-    const totalHours = data.activities.reduce((total, activity) => total + activity.hours, 0);
-    if (totalHours > 24) {
+    // Check if total effective activity hours exceed 24 (averaged across the week)
+    const totalEffectiveHours = data.activities.reduce((total, activity) => {
+      return total + (activity.hours * activity.daysPerWeek) / 7;
+    }, 0);
+    if (totalEffectiveHours > 24) {
       toast({
         title: "Total hours exceed limit",
-        description: "The total time spent on activities cannot exceed 24 hours per day.",
+        description: "The total time spent on activities cannot exceed 24 hours per day (averaged across the week).",
         variant: "destructive",
       });
       return;
@@ -1477,7 +1482,7 @@ const LifeVisualizer: React.FC = () => {
       const aliveDays = calculateAliveDays(birthdate);
       
       const activityStats: ActivityStat[] = data.activities.map(activity => {
-        const years = calculateActivityYears(activity.hours, aliveDays);
+        const years = calculateActivityYears(activity.hours, aliveDays, activity.daysPerWeek);
         const percentage = (years / age) * 100;
         
         // Use the dynamic comparisons generator for all activities
@@ -1499,8 +1504,9 @@ const LifeVisualizer: React.FC = () => {
       const weeksRemaining = calculateRemainingWeeks(birthdate, expectancy);
 
       const futureProjections = data.activities.map(activity => {
-        const yearsSoFar = calculateActivityYears(activity.hours, aliveDays);
-        const yearsRemaining = (activity.hours / 24) * 365 * (expectancy - age) / 365;
+        const yearsSoFar = calculateActivityYears(activity.hours, aliveDays, activity.daysPerWeek);
+        const effectiveDailyHours = (activity.hours * activity.daysPerWeek) / 7;
+        const yearsRemaining = (effectiveDailyHours / 24) * (expectancy - age);
         
         return {
           activity: activity.name,
@@ -1509,14 +1515,16 @@ const LifeVisualizer: React.FC = () => {
         };
       });
 
-      // Calculate free time as remaining hours
-      const dailyActivitiesHours = data.activities.reduce((sum, activity) => sum + activity.hours, 0);
+      // Calculate free time as remaining hours using effective daily hours
+      const dailyActivitiesHours = data.activities.reduce((sum, activity) => {
+        return sum + (activity.hours * activity.daysPerWeek) / 7;
+      }, 0);
       const freeHoursDaily = Math.max(0, 24 - dailyActivitiesHours);
       
       futureProjections.push({
         activity: 'Free Time',
-        yearsSoFar: calculateActivityYears(freeHoursDaily, aliveDays),
-        yearsRemaining: (freeHoursDaily / 24) * 365 * (expectancy - age) / 365
+        yearsSoFar: calculateActivityYears(freeHoursDaily, aliveDays, 7),
+        yearsRemaining: (freeHoursDaily / 24) * (expectancy - age)
       });
 
       setVisualizeResult({

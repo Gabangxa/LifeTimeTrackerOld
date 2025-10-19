@@ -21,9 +21,12 @@ export function calculateAliveDays(birthdate: Date): number {
 
 export function calculateActivityYears(
   dailyHours: number,
-  aliveDays: number
+  aliveDays: number,
+  daysPerWeek: number = 7
 ): number {
-  return (dailyHours * aliveDays) / 8760; // 8760 hours in a year
+  // Calculate effective daily hours: (hours * daysPerWeek / 7)
+  const effectiveDailyHours = (dailyHours * daysPerWeek) / 7;
+  return (effectiveDailyHours * aliveDays) / 8760; // 8760 hours in a year
 }
 
 export function calculateRemainingYears(
