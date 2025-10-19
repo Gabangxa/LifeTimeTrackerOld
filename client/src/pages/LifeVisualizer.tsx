@@ -573,63 +573,142 @@ const generateTrendRecommendations = (activityName: string, changeInHours: numbe
       
       // Type-specific recommendations
       if (isStrength) {
-        recommendations.push("Strength training: 10-17% all-cause mortality reduction, 30% CVD reduction for women");
-        recommendations.push("90 min/week linked to ~4 years biological age reduction (2024 study)");
-        recommendations.push("Optimal: 2-3 sessions/week, 30-60 min total, targeting major muscle groups");
+        const strengthTips = [
+          "Strength training delivers 10-17% all-cause mortality reduction and 30% CVD reduction for women",
+          "Just 90 min/week correlates with ~4 years biological age reduction (2024 study)",
+          "Best results: 2-3 sessions weekly, 30-60 min total, hitting major muscle groups",
+          "Resistance training preserves muscle mass and bone density - critical as we age",
+          "Building strength now prevents frailty and maintains independence later in life"
+        ];
+        const selectedStrengthTips = strengthTips.sort(() => 0.5 - Math.random()).slice(0, 2);
+        selectedStrengthTips.forEach(tip => recommendations.push(tip));
       } else if (isAerobic) {
-        recommendations.push("Aerobic exercise: Every 1 MET fitness increase = 11-17% lower death risk");
-        recommendations.push("Improves cardiovascular health, lowers blood pressure, enhances cognitive function");
-        recommendations.push("Optimal: 3-4 sessions/week at moderate-vigorous intensity");
+        const aerobicTips = [
+          "Every 1 MET fitness increase = 11-17% lower death risk - small gains matter",
+          "Cardio strengthens your heart, lowers blood pressure, and sharpens cognitive function",
+          "Aim for 3-4 sessions weekly at moderate-vigorous intensity for optimal results",
+          "Aerobic fitness is one of the strongest predictors of longevity",
+          "Your cardiovascular system adapts quickly - improvements visible within weeks"
+        ];
+        const selectedAerobicTips = aerobicTips.sort(() => 0.5 - Math.random()).slice(0, 2);
+        selectedAerobicTips.forEach(tip => recommendations.push(tip));
       } else {
-        recommendations.push("Combined aerobic + strength training shows 40% mortality reduction (20-year ATTICA study 2025)");
-        recommendations.push("Consider mixing cardio and resistance work for comprehensive benefits");
+        const combinedTips = [
+          "Combining aerobic + strength training delivers 40% mortality reduction (20-year ATTICA study 2025)",
+          "Mixing cardio and resistance work creates synergistic health benefits",
+          "The most comprehensive fitness gains come from varied exercise types",
+          "Diversifying your workouts prevents plateaus and reduces injury risk"
+        ];
+        const selectedCombinedTips = combinedTips.sort(() => 0.5 - Math.random()).slice(0, 2);
+        selectedCombinedTips.forEach(tip => recommendations.push(tip));
       }
       
-      recommendations.push("Consistency matters: Regular moderate activity often beats sporadic intense sessions");
+      const consistencyTips = [
+        "Consistency matters: Regular moderate activity often beats sporadic intense sessions",
+        "Building the habit is more important than perfecting each workout",
+        "Show up regularly - your future self will thank you"
+      ];
+      recommendations.push(consistencyTips[Math.floor(Math.random() * consistencyTips.length)]);
       
     } else {
       const reductionMinutes = Math.abs(changeInHours) * 7 * 60;
-      recommendations.push("⚠️ Reducing exercise increases health risks - sedentary lifestyle is a major mortality factor");
-      recommendations.push(`After reduction: ${minutesPerWeek.toFixed(0)} min/week (reducing by ${reductionMinutes.toFixed(0)} min/week)`);
+      const reductionWarnings = [
+        "⚠️ Reducing exercise elevates health risks - sedentary behavior is a leading mortality factor",
+        "⚠️ Cutting back on movement increases cardiovascular, metabolic, and cognitive risks",
+        "⚠️ Less activity means higher health risks - the sedentary lifestyle toll is well-documented"
+      ];
+      recommendations.push(reductionWarnings[Math.floor(Math.random() * reductionWarnings.length)]);
+      recommendations.push(`After this change: ${minutesPerWeek.toFixed(0)} min/week (down by ${reductionMinutes.toFixed(0)} min/week)`);
       if (minutesPerWeek < 150) {
-        recommendations.push(`⚠️ Below WHO minimum of 150 min/week - this significantly impacts cardiovascular, metabolic, and cognitive health`);
+        recommendations.push(`⚠️ This drops below WHO's 150 min/week minimum - significant impact on cardiovascular, metabolic, and cognitive health`);
       } else {
-        recommendations.push("Still above WHO minimum but impacts remain - cardiovascular, metabolic, and cognitive health affected");
+        recommendations.push("Above WHO minimum but still losing protective benefits from reduced activity");
       }
-      recommendations.push("Even small amounts preserve benefits: 15-20 min/day maintains baseline health");
-      recommendations.push("Consider lower-intensity alternatives if time-constrained (walking, gentle movement)");
+      const preservationTips = [
+        "Even 15-20 min/day preserves meaningful health benefits if time is limited",
+        "Brief daily movement maintains baseline health better than sporadic longer sessions",
+        "Short, consistent activity beats nothing - every minute counts"
+      ];
+      recommendations.push(preservationTips[Math.floor(Math.random() * preservationTips.length)]);
+      recommendations.push("Low-intensity options like walking or gentle stretching work if you're time-constrained");
     }
   } else if (activityLower.includes('learning') || activityLower.includes('study') || activityLower.includes('reading')) {
     if (isPositiveChange) {
-      recommendations.push("Continuous learning creates exponential knowledge growth");
-      recommendations.push("Skills compound and open new opportunities over decades");
-      recommendations.push("Focus on fundamentals that build upon each other");
+      const learningTips = [
+        "Knowledge compounds exponentially - what you learn today becomes the foundation for tomorrow's insights",
+        "Each skill you master opens doors to entirely new fields and opportunities",
+        "Building strong fundamentals now pays dividends across your entire lifetime",
+        "The brain's neuroplasticity means learning literally reshapes your cognitive abilities",
+        "Deep work on challenging material creates lasting neural pathways"
+      ];
+      const selectedTips = learningTips.sort(() => 0.5 - Math.random()).slice(0, 2);
+      selectedTips.forEach(tip => recommendations.push(tip));
+      recommendations.push("Consider focusing on skills that complement each other for multiplied impact");
+    } else {
+      recommendations.push("Even brief daily learning sessions maintain cognitive sharpness and adaptability");
+      recommendations.push("Consider audiobooks or podcasts to preserve learning during other activities");
     }
   } else if (activityLower.includes('work') || activityLower.includes('career')) {
     if (changeInHours > 1) {
-      recommendations.push("Excessive work hours can lead to burnout and diminishing returns");
-      recommendations.push("Consider if this time investment aligns with career goals");
+      const workWarnings = [
+        "Beyond a certain threshold, extra work hours yield diminishing returns on productivity and creativity",
+        "Research shows burnout compounds over time - recovery gets harder, not easier",
+        "Consider whether this time investment truly advances your long-term career trajectory",
+        "Peak performance requires rest and recovery - overwork can harm more than help"
+      ];
+      const selectedWarnings = workWarnings.sort(() => 0.5 - Math.random()).slice(0, 2);
+      selectedWarnings.forEach(warning => recommendations.push(warning));
     } else if (isPositiveChange && changeInHours <= 1) {
-      recommendations.push("Strategic career time can compound into significant opportunities");
-      recommendations.push("Focus on high-impact activities that build your reputation");
+      const careerTips = [
+        "Strategic focus on high-leverage activities can transform your career trajectory",
+        "This extra time could compound into expertise, reputation, and advancement opportunities",
+        "Consider directing this time toward skill-building rather than busywork",
+        "Quality beats quantity - make sure this additional time is truly productive"
+      ];
+      const selectedTips = careerTips.sort(() => 0.5 - Math.random()).slice(0, 2);
+      selectedTips.forEach(tip => recommendations.push(tip));
+    } else {
+      recommendations.push("Reducing work hours can improve work-life balance and prevent burnout");
+      recommendations.push("Make sure remaining work time is focused on high-impact activities");
     }
   } else if (activityLower.includes('social') || activityLower.includes('family') || activityLower.includes('relationship')) {
     if (isPositiveChange) {
-      recommendations.push("Strong relationships provide compounding emotional and health benefits");
-      recommendations.push("Social connections often become more valuable with age");
+      const socialBenefits = [
+        "Harvard's 80-year study found relationships are the #1 predictor of happiness and longevity",
+        "Quality time with loved ones compounds emotionally - memories and bonds strengthen over time",
+        "Social connections act as a buffer against stress, anxiety, and physical illness",
+        "The value of strong relationships often becomes clearer as we age",
+        "Investing in relationships now creates a support network for life's challenges"
+      ];
+      const selectedBenefits = socialBenefits.sort(() => 0.5 - Math.random()).slice(0, 2);
+      selectedBenefits.forEach(benefit => recommendations.push(benefit));
+    } else {
+      recommendations.push("Even small amounts of quality time can maintain important relationships");
+      recommendations.push("Consider being more present during interactions rather than just spending more time");
     }
   } else if (activityLower.includes('sleep')) {
     // Evidence-based sleep recommendations (Nature Aging 2022, Scientific Reports 2016, SLEEP 2024)
     if (isPositiveChange) {
-      recommendations.push("Optimal sleep (7-9h) improves cognitive performance, cardiovascular health, and longevity");
-      recommendations.push("7 hours is the sweet spot for cognitive function in middle-aged and older adults (Nature Aging, 2022)");
-      recommendations.push("Sleep regularity (consistency) is a stronger predictor of mortality than duration alone (SLEEP, 2024)");
-      recommendations.push("Good sleep compounds: better immune function, metabolic health, and emotional regulation");
+      const sleepBenefits = [
+        "Quality sleep (7-9h) enhances cognitive performance, cardiovascular health, and overall longevity",
+        "Research shows 7 hours is optimal for cognitive function in middle-aged and older adults (Nature Aging, 2022)",
+        "Consistent sleep schedules predict mortality better than duration alone (SLEEP, 2024)",
+        "Adequate rest strengthens immune function, metabolic health, and emotional stability",
+        "Your brain consolidates memories and clears toxins during deep sleep phases",
+        "Quality sleep improves decision-making, creativity, and problem-solving abilities"
+      ];
+      const selectedBenefits = sleepBenefits.sort(() => 0.5 - Math.random()).slice(0, 3);
+      selectedBenefits.forEach(benefit => recommendations.push(benefit));
     } else {
-      recommendations.push("Sleep debt compounds severely: 1 hour of lost sleep takes 4 days to fully recover (Scientific Reports, 2016)");
-      recommendations.push("Chronic sleep restriction causes cumulative cognitive impairment similar to total sleep deprivation");
-      recommendations.push("Weekend catch-up sleep does NOT restore metabolic and cognitive damage from weekday sleep debt");
-      recommendations.push("Sleep debt increases risk of cardiovascular disease, obesity, diabetes, and cognitive decline");
+      const sleepWarnings = [
+        "Sleep debt has a brutal 4:1 recovery ratio - losing 1 hour takes 4 days to fully recover (Scientific Reports, 2016)",
+        "Chronic sleep restriction creates cognitive impairment similar to total sleep deprivation",
+        "Weekend catch-up sleep doesn't undo the metabolic and cognitive damage from weekday deficits",
+        "Insufficient sleep elevates risks for cardiovascular disease, obesity, diabetes, and cognitive decline",
+        "Your body doesn't adapt to sleep deprivation - the damage accumulates silently"
+      ];
+      const selectedWarnings = sleepWarnings.sort(() => 0.5 - Math.random()).slice(0, 3);
+      selectedWarnings.forEach(warning => recommendations.push(warning));
       if (Math.abs(changeInHours) >= 2) {
         recommendations.push("⚠️ Severe sleep restriction (<6h) dramatically increases mortality risk, especially under age 65");
       }
