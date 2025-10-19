@@ -1683,7 +1683,7 @@ const LifeVisualizer: React.FC = () => {
   const calculateExerciseOptimization = () => {
     if (!visualizeResult) return null;
     
-    const exerciseActivity = activities.find(a => 
+    const exerciseActivity = visualizeResult.activityStats.find(a => 
       a.name.toLowerCase().includes('exercise') || 
       a.name.toLowerCase().includes('workout') || 
       a.name.toLowerCase().includes('fitness') ||
@@ -1691,12 +1691,13 @@ const LifeVisualizer: React.FC = () => {
     );
     if (!exerciseActivity) return null;
 
-    const currentExercise = exerciseActivity.hours;
+    const currentExercise = (exerciseActivity.years * 8760) / (visualizeResult.age * 365);
     const weeklyHours = currentExercise * 7;
     const recommendedWeekly = 2.5; // WHO recommends 150 minutes = 2.5 hours per week
     
-    // If already in optimal range (2.5-5 hours/week), don't show recommendations
-    if (weeklyHours >= 2.5 && weeklyHours <= 5) {
+    // If already in optimal range (2.5-10 hours/week), don't show recommendations
+    // Expanded to ~1.5 hours/day max to avoid flagging healthy active lifestyles
+    if (weeklyHours >= 2.5 && weeklyHours <= 10) {
       return null;
     }
     
@@ -1730,11 +1731,11 @@ const LifeVisualizer: React.FC = () => {
         'Join group fitness classes for motivation',
         'Use fitness apps to track progress'
       ];
-    } else if (weeklyHours > 5) { // More than 300 minutes per week - potentially overtraining
+    } else if (weeklyHours > 10) { // More than 10 hours per week - potentially overtraining
       fitnessLevel = 'Highly Active';
-      healthImpact = 'Consider monitoring for overtraining - benefits plateau beyond 5 hours/week';
-      yearsImpact = 0.5; // Diminishing returns
-      optimizedHours = 0.7; // Suggest 5 hours/week = ~42 min daily
+      healthImpact = 'Consider monitoring for overtraining - excessive volume may lead to burnout';
+      yearsImpact = 0; // Neutral to slightly negative
+      optimizedHours = 1; // Suggest 7 hours/week = 1 hour daily
       recommendations = [
         'Ensure adequate recovery time between sessions',
         'Monitor for overtraining symptoms (fatigue, decreased performance)',
@@ -1765,10 +1766,10 @@ const LifeVisualizer: React.FC = () => {
   const calculateSleepOptimization = () => {
     if (!visualizeResult) return null;
     
-    const sleepActivity = activities.find(a => a.name.toLowerCase().includes('sleep'));
+    const sleepActivity = visualizeResult.activityStats.find(a => a.name.toLowerCase().includes('sleep'));
     if (!sleepActivity) return null;
 
-    const currentSleep = sleepActivity.hours;
+    const currentSleep = (sleepActivity.years * 8760) / (visualizeResult.age * 365);
     const optimalSleep = 8; // Recommended 8 hours
     
     // If already in optimal range (7-9 hours), don't show recommendations
@@ -2200,7 +2201,7 @@ const LifeVisualizer: React.FC = () => {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-xs">
-                              <p className="text-sm">Add your own personalized activity to track how you spend your time. You can add up to 5 activities total.</p>
+                              <p className="text-sm">Add your own personalized activity to track how you spend your time. Add as many as you need - only limited by the 24-hour daily limit.</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -2224,10 +2225,11 @@ const LifeVisualizer: React.FC = () => {
                                 const newActivities = [...activities];
                                 newActivities[index].name = e.target.value;
                                 newActivities[index].icon = getActivityIcon(e.target.value);
-                                form.setValue('activities', newActivities);
+                                form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
                               }}
                               placeholder="Activity name"
                               className="border-0 bg-transparent p-0 font-medium focus-visible:ring-0 dark:text-white"
+                              data-testid={`input-activity-name-${index}`}
                             />
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               {activity.hours} {activity.hours === 1 ? 'hour' : 'hours'} per day
