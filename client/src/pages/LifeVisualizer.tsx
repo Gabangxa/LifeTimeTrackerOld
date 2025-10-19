@@ -2244,11 +2244,11 @@ const LifeVisualizer: React.FC = () => {
                               data-testid={`input-activity-name-${index}`}
                             />
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {activity.hours} {activity.hours === 1 ? 'hour' : 'hours'} per day
+                              {activity.hours} {activity.hours === 1 ? 'hour' : 'hours'}, {activity.daysPerWeek} {activity.daysPerWeek === 1 ? 'day' : 'days'}/week
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <div className="w-20">
+                            <div className="flex items-center space-x-1">
                               <Input
                                 type="number"
                                 min="0"
@@ -2260,8 +2260,27 @@ const LifeVisualizer: React.FC = () => {
                                   newActivities[index].hours = parseFloat(e.target.value) || 0;
                                   form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
                                 }}
-                                className="text-center text-sm"
+                                className="text-center text-sm w-16"
+                                data-testid={`input-activity-hours-${index}`}
                               />
+                              <span className="text-xs text-gray-500 dark:text-gray-400">hrs</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Input
+                                type="number"
+                                min="1"
+                                max="7"
+                                step="1"
+                                value={activity.daysPerWeek}
+                                onChange={(e) => {
+                                  const newActivities = [...activities];
+                                  newActivities[index].daysPerWeek = parseInt(e.target.value) || 7;
+                                  form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+                                }}
+                                className="text-center text-sm w-14"
+                                data-testid={`input-activity-days-${index}`}
+                              />
+                              <span className="text-xs text-gray-500 dark:text-gray-400">d/w</span>
                             </div>
                             {index >= 3 && (
                               <Button 
