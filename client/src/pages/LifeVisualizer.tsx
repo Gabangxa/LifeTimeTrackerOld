@@ -109,18 +109,7 @@ const formSchema = z.object({
       color: z.string().optional()
     })
   )
-  .min(1, "At least one activity is required")
-  .refine(activities => {
-    // Calculate effective daily hours: (hours * daysPerWeek / 7)
-    const totalEffectiveHours = activities.reduce((total, activity) => {
-      const effectiveHours = (activity.hours * activity.daysPerWeek) / 7;
-      return total + effectiveHours;
-    }, 0);
-    return totalEffectiveHours <= 24;
-  }, {
-    message: "Total time spent on activities cannot exceed 24 hours per day (averaged across the week)",
-    path: ["activities"]
-  }),
+  .min(1, "At least one activity is required"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -293,14 +282,14 @@ const getSuggestedTemplate = (age: number, country: string, profession?: string)
     }
   }
   
-  // Ensure total hours don't exceed 24
-  const totalHours = adjustedTemplate.reduce((sum, activity) => sum + activity.hours, 0);
-  if (totalHours > 24) {
-    const excessHours = totalHours - 24;
+  // Ensure total effective hours don't exceed 24
+  const totalEffectiveHours = adjustedTemplate.reduce((sum, activity) => sum + (activity.hours * activity.daysPerWeek) / 7, 0);
+  if (totalEffectiveHours > 24) {
+    const excessHours = totalEffectiveHours - 24;
     // Proportionally reduce all activities
     return adjustedTemplate.map(activity => ({
       ...activity,
-      hours: Math.max(0.5, activity.hours - (activity.hours / totalHours) * excessHours)
+      hours: Math.max(0.5, activity.hours - (activity.hours / totalEffectiveHours) * excessHours)
     })).filter(activity => activity.hours >= 0.5);
   }
   
@@ -2331,7 +2320,7 @@ const LifeVisualizer: React.FC = () => {
                   
                   {/* Quick Stats Preview */}
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Total hours: {activities.reduce((sum, activity) => sum + activity.hours, 0)}/24
+                    Total hours: {activities.reduce((sum, activity) => sum + (activity.hours * activity.daysPerWeek) / 7, 0).toFixed(1)}/24
                   </div>
                 </div>
               </form>
