@@ -983,179 +983,55 @@ const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: number)
   };
 };
 
-// Activity comparisons - predefined for default activities
+// Activity comparisons - focused on meaningful, data-driven insights
 const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: number) => string}>> = {
   'Sleep': [
     { 
-      icon: 'fa-moon', 
-      text: (years) => `Dreamed for ${formatNumber(years * 365 * 8)} hours straight 🌙` 
-    },
-    { 
-      icon: 'fa-battery-full', 
-      text: (years) => `Recharged your body ${formatNumber(years * 365)} times like a human battery 🔋` 
+      icon: 'fa-clock', 
+      text: (years) => `${formatNumber(years * 365 * 8)} total hours of rest and recovery` 
     }
   ],
   'Work': [
     { 
-      icon: 'fa-coins', 
-      text: (years) => `Earned approximately ${formatNumber(years * 50000)} hours of wages 💰` 
-    },
-    { 
-      icon: 'fa-mountain', 
-      text: (years) => `Built a career mountain ${Math.floor(years / 10)} times over 🏔️` 
+      icon: 'fa-clock', 
+      text: (years) => `${formatNumber(years * 365 * 8)} hours of professional work` 
     }
   ],
   'Commute': [
     { 
-      icon: 'fa-car', 
-      text: (years) => `Drove ${formatNumber(years * 15000)} miles - enough to circle Earth ${Math.floor(years * 0.6)} times 🚗` 
-    },
-    { 
-      icon: 'fa-podcast', 
-      text: (years) => `Could've learned ${Math.floor(years * 365)} new skills through audiobooks 🎧` 
+      icon: 'fa-road', 
+      text: (years) => `Approximately ${formatNumber(years * 15000)} miles traveled` 
     }
   ],
   'Exercise': [
     { 
       icon: 'fa-fire', 
-      text: (years) => `Burned approximately ${formatNumber(years * 365 * 400)} calories 🔥` 
-    },
-    { 
-      icon: 'fa-mountain-sun', 
-      text: (years) => `Could've climbed Mount Everest ${Math.floor(years * 20)} times 🏔️` 
-    }
-  ],
-  'Social Media': [
-    { 
-      icon: 'fa-eye', 
-      text: (years) => `Viewed ${formatNumber(years * 365 * 2000)} photos and videos 👁️` 
-    },
-    { 
-      icon: 'fa-globe', 
-      text: (years) => `Could've explored ${Math.floor(years * 20)} countries in real life 🌍` 
-    }
-  ],
-  'Cooking': [
-    { 
-      icon: 'fa-fire-burner', 
-      text: (years) => `Used the stove for ${formatNumber(years * 365 * 2)} cooking sessions 🔥` 
-    },
-    { 
-      icon: 'fa-apple-whole', 
-      text: (years) => `Chopped ${formatNumber(years * 365 * 10)} pounds of fresh ingredients 🍎` 
+      text: (years) => `Approximately ${formatNumber(years * 365 * 400)} calories burned` 
     }
   ],
   'Reading': [
     { 
-      icon: 'fa-glasses', 
-      text: (years) => `Turned ${formatNumber(years * 365 * 300)} pages of knowledge 👓` 
-    },
-    { 
-      icon: 'fa-lightbulb', 
-      text: (years) => `Gained ${Math.floor(years * 100)} new ideas and insights 💡` 
-    }
-  ],
-  'Gaming': [
-    { 
-      icon: 'fa-joystick', 
-      text: (years) => `Pressed controller buttons ${formatNumber(years * 365 * 50000)} times 🎮` 
-    },
-    { 
-      icon: 'fa-star', 
-      text: (years) => `Collected ${formatNumber(years * 365 * 20)} in-game achievements and rewards ⭐` 
-    }
-  ],
-  'Eating': [
-    { 
-      icon: 'fa-utensils', 
-      text: (years) => `Chewed food for ${formatNumber(years * 365 * 60)} minutes total 🍽️` 
-    },
-    { 
-      icon: 'fa-seedling', 
-      text: (years) => `Consumed nutrients from ${formatNumber(years * 365 * 5)} different plants 🌱` 
-    }
-  ],
-  'TV/Movies': [
-    { 
-      icon: 'fa-tv', 
-      text: (years) => `Watched ${formatNumber(years * 365 * 4)} hours of entertainment 📺` 
-    },
-    { 
-      icon: 'fa-ticket', 
-      text: (years) => `Equivalent to ${Math.floor(years * 100)} movie theater visits 🎬` 
+      icon: 'fa-book', 
+      text: (years) => `Approximately ${Math.floor(years * 50)} books read (assuming 200 pages/book)` 
     }
   ],
   'Studying': [
     { 
       icon: 'fa-graduation-cap', 
-      text: (years) => `Accumulated ${Math.floor(years / 4)} college degrees worth of study time 🎓` 
-    },
-    { 
-      icon: 'fa-brain', 
-      text: (years) => `Strengthened neural pathways ${formatNumber(years * 365 * 1000)} times 🧠` 
-    }
-  ],
-  'Hobbies': [
-    { 
-      icon: 'fa-palette', 
-      text: (years) => `Created ${formatNumber(years * 365 * 2)} unique projects or pieces 🎨` 
-    },
-    { 
-      icon: 'fa-heart', 
-      text: (years) => `Experienced pure joy for ${formatNumber(years * 365 * 2)} hours 💖` 
+      text: (years) => `${Math.floor(years / 4)} college degrees equivalent in study time` 
     }
   ]
 };
 
-// Generic comparison generators for all activities
+// Generic comparison generators for all activities - focused on factual data
 const GENERIC_COMPARISONS: Array<{icon: string, text: (years: number, activity: string) => string}> = [
   {
     icon: 'fa-clock', 
-    text: (years, activity) => `${formatNumber(years * 365 * 24)} hours dedicated to ${activity.toLowerCase()}`
+    text: (years, activity) => `${formatNumber(years * 365 * 24)} total hours spent on ${activity.toLowerCase()}`
   },
   {
-    icon: 'fa-earth-americas', 
-    text: (years, activity) => `Could've explored ${Math.floor(years * 8)} different countries instead`
-  },
-  {
-    icon: 'fa-graduation-cap', 
-    text: (years, activity) => `Time equivalent to ${Math.floor(years / 4)} university degrees`
-  },
-  {
-    icon: 'fa-book-open', 
-    text: (years, activity) => `Could've read ${Math.floor(years * 50)} books cover to cover`
-  },
-  {
-    icon: 'fa-plane', 
-    text: (years, activity) => `Could've taken ${Math.floor(years * 10)} epic vacations`
-  },
-  {
-    icon: 'fa-dumbbell', 
-    text: (years, activity) => `Could've completed ${formatNumber(years * 300)} intense workouts`
-  },
-  {
-    icon: 'fa-brain', 
-    text: (years, activity) => `Could've mastered ${Math.floor(years / 2)} complex skills`
-  },
-  {
-    icon: 'fa-paint-brush', 
-    text: (years, activity) => `Could've created ${Math.floor(years * 50)} works of art`
-  },
-  {
-    icon: 'fa-mountain', 
-    text: (years, activity) => `Could've hiked ${formatNumber(years * 800)} miles of wilderness`
-  },
-  {
-    icon: 'fa-seedling', 
-    text: (years, activity) => `Could've grown ${Math.floor(years * 15)} thriving gardens`
-  },
-  {
-    icon: 'fa-music', 
-    text: (years, activity) => `Could've learned ${Math.floor(years / 3)} musical instruments`
-  },
-  {
-    icon: 'fa-heart', 
-    text: (years, activity) => `Your heart beat ${formatNumber(years * 365 * 24 * 60 * 72)} times during this activity`
+    icon: 'fa-calendar-days', 
+    text: (years, activity) => `${formatNumber(years * 365)} days dedicated to this activity`
   }
 ];
 
