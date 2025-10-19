@@ -15,6 +15,7 @@ export interface ActivityData {
   id: string;
   name: string;
   hours: number;
+  daysPerWeek: number;
   icon: string;
   color: string;
 }

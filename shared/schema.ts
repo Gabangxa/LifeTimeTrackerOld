@@ -66,6 +66,7 @@ export const activitySchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Activity name is required"),
   hours: z.number().min(0, "Hours must be greater than or equal to 0").max(24, "Hours must be less than or equal to 24"),
+  daysPerWeek: z.number().min(1, "Days per week must be at least 1").max(7, "Days per week cannot exceed 7").default(7),
   icon: z.string().optional(),
   color: z.string().optional()
 });

@@ -101,18 +101,25 @@ const formSchema = z.object({
       hours: z.number()
         .min(0, "Hours must be greater than or equal to 0")
         .max(24, "Hours must be less than or equal to 24"),
+      daysPerWeek: z.number()
+        .min(1, "Days per week must be at least 1")
+        .max(7, "Days per week cannot exceed 7")
+        .default(7),
       icon: z.string().optional(),
       color: z.string().optional()
     })
   )
   .min(1, "At least one activity is required")
   .refine(activities => {
-    // Calculate total hours spent on all activities
-    const totalHours = activities.reduce((total, activity) => total + activity.hours, 0);
-    return totalHours <= 24;
+    // Calculate effective daily hours: (hours * daysPerWeek / 7)
+    const totalEffectiveHours = activities.reduce((total, activity) => {
+      const effectiveHours = (activity.hours * activity.daysPerWeek) / 7;
+      return total + effectiveHours;
+    }, 0);
+    return totalEffectiveHours <= 24;
   }, {
-    message: "Total time spent on activities cannot exceed 24 hours per day",
-    path: ["activities"] // This will display the error message under the activities field
+    message: "Total time spent on activities cannot exceed 24 hours per day (averaged across the week)",
+    path: ["activities"]
   }),
 });
 
@@ -120,68 +127,68 @@ type FormData = z.infer<typeof formSchema>;
 
 // Default activities
 const DEFAULT_ACTIVITIES: ActivityData[] = [
-  { id: uuidv4(), name: 'Sleep', hours: 8, icon: 'fa-bed', color: '#3B82F6' },
-  { id: uuidv4(), name: 'Work', hours: 8, icon: 'fa-briefcase', color: '#10B981' },
-  { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#8B5CF6' },
+  { id: uuidv4(), name: 'Sleep', hours: 8, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+  { id: uuidv4(), name: 'Work', hours: 8, daysPerWeek: 5, icon: 'fa-briefcase', color: '#10B981' },
+  { id: uuidv4(), name: 'Exercise', hours: 1, daysPerWeek: 4, icon: 'fa-dumbbell', color: '#8B5CF6' },
 ];
 
 // Lifestyle templates for smart onboarding
 const LIFESTYLE_TEMPLATES: Record<string, ActivityData[]> = {
   student: [
-    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Study', hours: 6, icon: 'fa-graduation-cap', color: '#10B981' },
-    { id: uuidv4(), name: 'Classes', hours: 4, icon: 'fa-chalkboard', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Social Time', hours: 2, icon: 'fa-users', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 7, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Study', hours: 6, daysPerWeek: 6, icon: 'fa-graduation-cap', color: '#10B981' },
+    { id: uuidv4(), name: 'Classes', hours: 4, daysPerWeek: 5, icon: 'fa-chalkboard', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Social Time', hours: 2, daysPerWeek: 3, icon: 'fa-users', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, daysPerWeek: 4, icon: 'fa-dumbbell', color: '#EF4444' },
   ],
   parent: [
-    { id: uuidv4(), name: 'Sleep', hours: 6, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Work', hours: 8, icon: 'fa-briefcase', color: '#10B981' },
-    { id: uuidv4(), name: 'Childcare', hours: 4, icon: 'fa-baby', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Household', hours: 2, icon: 'fa-home', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Family Time', hours: 2, icon: 'fa-heart', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 6, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Work', hours: 8, daysPerWeek: 5, icon: 'fa-briefcase', color: '#10B981' },
+    { id: uuidv4(), name: 'Childcare', hours: 4, daysPerWeek: 7, icon: 'fa-baby', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Household', hours: 2, daysPerWeek: 7, icon: 'fa-home', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Family Time', hours: 2, daysPerWeek: 7, icon: 'fa-heart', color: '#EF4444' },
   ],
   freelancer: [
-    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Client Work', hours: 6, icon: 'fa-laptop', color: '#10B981' },
-    { id: uuidv4(), name: 'Business Development', hours: 2, icon: 'fa-chart-line', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Learning/Skills', hours: 2, icon: 'fa-book', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 7, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Client Work', hours: 6, daysPerWeek: 5, icon: 'fa-laptop', color: '#10B981' },
+    { id: uuidv4(), name: 'Business Development', hours: 2, daysPerWeek: 3, icon: 'fa-chart-line', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Learning/Skills', hours: 2, daysPerWeek: 4, icon: 'fa-book', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, daysPerWeek: 3, icon: 'fa-dumbbell', color: '#EF4444' },
   ],
   retiree: [
-    { id: uuidv4(), name: 'Sleep', hours: 8, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Hobbies', hours: 4, icon: 'fa-paint-brush', color: '#10B981' },
-    { id: uuidv4(), name: 'Social Activities', hours: 3, icon: 'fa-users', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Exercise', hours: 2, icon: 'fa-dumbbell', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Family Time', hours: 2, icon: 'fa-heart', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 8, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Hobbies', hours: 4, daysPerWeek: 5, icon: 'fa-paint-brush', color: '#10B981' },
+    { id: uuidv4(), name: 'Social Activities', hours: 3, daysPerWeek: 3, icon: 'fa-users', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Exercise', hours: 2, daysPerWeek: 4, icon: 'fa-dumbbell', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Family Time', hours: 2, daysPerWeek: 7, icon: 'fa-heart', color: '#EF4444' },
   ],
   'office-worker': [
-    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Work', hours: 8, icon: 'fa-briefcase', color: '#10B981' },
-    { id: uuidv4(), name: 'Commute', hours: 2, icon: 'fa-car', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Leisure', hours: 3, icon: 'fa-tv', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 7, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Work', hours: 8, daysPerWeek: 5, icon: 'fa-briefcase', color: '#10B981' },
+    { id: uuidv4(), name: 'Commute', hours: 2, daysPerWeek: 5, icon: 'fa-car', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, daysPerWeek: 3, icon: 'fa-dumbbell', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Leisure', hours: 3, daysPerWeek: 7, icon: 'fa-tv', color: '#EF4444' },
   ],
   entrepreneur: [
-    { id: uuidv4(), name: 'Sleep', hours: 6, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Business Work', hours: 10, icon: 'fa-rocket', color: '#10B981' },
-    { id: uuidv4(), name: 'Networking', hours: 2, icon: 'fa-handshake', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Learning', hours: 2, icon: 'fa-book', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 6, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Business Work', hours: 10, daysPerWeek: 6, icon: 'fa-rocket', color: '#10B981' },
+    { id: uuidv4(), name: 'Networking', hours: 2, daysPerWeek: 3, icon: 'fa-handshake', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Learning', hours: 2, daysPerWeek: 5, icon: 'fa-book', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, daysPerWeek: 3, icon: 'fa-dumbbell', color: '#EF4444' },
   ],
   'healthcare-worker': [
-    { id: uuidv4(), name: 'Sleep', hours: 6, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Work', hours: 10, icon: 'fa-user-md', color: '#10B981' },
-    { id: uuidv4(), name: 'Commute', hours: 1, icon: 'fa-car', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Rest/Recovery', hours: 3, icon: 'fa-couch', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Exercise', hours: 1, icon: 'fa-dumbbell', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 6, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Work', hours: 10, daysPerWeek: 5, icon: 'fa-user-md', color: '#10B981' },
+    { id: uuidv4(), name: 'Commute', hours: 1, daysPerWeek: 5, icon: 'fa-car', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Rest/Recovery', hours: 3, daysPerWeek: 7, icon: 'fa-couch', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Exercise', hours: 1, daysPerWeek: 3, icon: 'fa-dumbbell', color: '#EF4444' },
   ],
   teacher: [
-    { id: uuidv4(), name: 'Sleep', hours: 7, icon: 'fa-bed', color: '#3B82F6' },
-    { id: uuidv4(), name: 'Teaching', hours: 6, icon: 'fa-chalkboard-teacher', color: '#10B981' },
-    { id: uuidv4(), name: 'Lesson Planning', hours: 2, icon: 'fa-clipboard-list', color: '#F59E0B' },
-    { id: uuidv4(), name: 'Grading', hours: 2, icon: 'fa-pen', color: '#8B5CF6' },
-    { id: uuidv4(), name: 'Personal Time', hours: 3, icon: 'fa-coffee', color: '#EF4444' },
+    { id: uuidv4(), name: 'Sleep', hours: 7, daysPerWeek: 7, icon: 'fa-bed', color: '#3B82F6' },
+    { id: uuidv4(), name: 'Teaching', hours: 6, daysPerWeek: 5, icon: 'fa-chalkboard-teacher', color: '#10B981' },
+    { id: uuidv4(), name: 'Lesson Planning', hours: 2, daysPerWeek: 5, icon: 'fa-clipboard-list', color: '#F59E0B' },
+    { id: uuidv4(), name: 'Grading', hours: 2, daysPerWeek: 4, icon: 'fa-pen', color: '#8B5CF6' },
+    { id: uuidv4(), name: 'Personal Time', hours: 3, daysPerWeek: 7, icon: 'fa-coffee', color: '#EF4444' },
   ],
 };
 
@@ -271,6 +278,7 @@ const getSuggestedTemplate = (age: number, country: string, profession?: string)
       id: uuidv4(),
       name: 'Commute',
       hours: commuteHours,
+      daysPerWeek: 7,
       icon: 'fa-car',
       color: '#F59E0B'
     });
@@ -1178,7 +1186,7 @@ const LifeVisualizer: React.FC = () => {
         const trends = changeOptions.map(change => ({
           change,
           analysis: calculateTrendAnalysis(
-            { id: '', name: activity.name, hours: activity.years * 24 / (lifeExpectancy - 18), icon: activity.icon, color: activity.color },
+            { id: '', name: activity.name, hours: activity.years * 24 / (lifeExpectancy - 18), daysPerWeek: 7, icon: activity.icon, color: activity.color },
             change,
             { start: currentAge, end: lifeExpectancy },
             currentAge
@@ -1203,6 +1211,7 @@ const LifeVisualizer: React.FC = () => {
               id: '', 
               name: activities[i].name, 
               hours: activities[i].years * 24 / (lifeExpectancy - 18),
+              daysPerWeek: 7,
               icon: activities[i].icon,
               color: activities[i].color
             };
@@ -1210,6 +1219,7 @@ const LifeVisualizer: React.FC = () => {
               id: '', 
               name: activities[j].name, 
               hours: activities[j].years * 24 / (lifeExpectancy - 18),
+              daysPerWeek: 7,
               icon: activities[j].icon,
               color: activities[j].color
             };
@@ -1238,6 +1248,7 @@ const LifeVisualizer: React.FC = () => {
         id: '',
         name: activity.name,
         hours: activity.years * 24 / (lifeExpectancy - 18),
+        daysPerWeek: 7,
         icon: activity.icon,
         color: activity.color
       }));
@@ -1349,7 +1360,8 @@ const LifeVisualizer: React.FC = () => {
       { 
         id: uuidv4(), 
         name: '', 
-        hours: 1, 
+        hours: 1,
+        daysPerWeek: 7,
         icon: 'fa-circle', 
         color
       }
