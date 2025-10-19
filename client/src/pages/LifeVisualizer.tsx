@@ -1450,20 +1450,23 @@ const LifeVisualizer: React.FC = () => {
 
   // Add custom activity
   const addActivity = () => {
-    // Limit to maximum 5 activities total
-    if (activities.length >= 5) {
-      toast({
-        title: "Maximum activities reached",
-        description: "You can have a maximum of 5 activities. Remove an existing one to add a new activity.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // No hard limit on activities - only constrained by 24-hour daily limit
+    // Generate a color from an expanded palette
+    const colorPalette = [
+      '#D6293B', // Red
+      '#F7893B', // Orange
+      '#FBBF24', // Yellow
+      '#34D399', // Green
+      '#60A5FA', // Light Blue
+      '#A78BFA', // Purple
+      '#F472B6', // Pink
+      '#FB923C', // Amber
+      '#4ADE80', // Lime
+      '#38BDF8'  // Sky
+    ];
     
-    // Assign specific colors based on activity count
-    // First additional activity (index 3) gets red, second (index 4) gets orange
-    const fixedColors = ['#D6293B', '#F7893B']; // Red and Orange
-    const colorIndex = activities.length - 3; // 0 for first custom activity, 1 for second
+    const colorIndex = (activities.length - 3) % colorPalette.length;
+    const color = colorIndex >= 0 ? colorPalette[colorIndex] : getRandomColorHex();
     
     form.setValue('activities', [
       ...activities,
@@ -1472,7 +1475,7 @@ const LifeVisualizer: React.FC = () => {
         name: '', 
         hours: 1, 
         icon: 'fa-circle', 
-        color: colorIndex >= 0 && colorIndex < fixedColors.length ? fixedColors[colorIndex] : getRandomColorHex()
+        color
       }
     ]);
   };
