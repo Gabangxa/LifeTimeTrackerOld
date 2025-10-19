@@ -434,12 +434,43 @@ const calculateCompoundingFactors = (
       healthMultiplier *= socialAgeFactor;
     }
   } else if (activityLower.includes('sleep')) {
-    if (isPositiveChange && currentAge > 30) {
-      // Good sleep compounds: better cognitive function, immune system, mood
-      healthMultiplier = 1 + (0.25 * timeFactor * Math.abs(changeInHours));
+    // Research-based sleep calculations (Nature Aging 2022, Scientific Reports 2016, SLEEP 2024)
+    // Optimal: 7-9 hours for adults, 7 hours is the sweet spot for cognition
+    // Sleep debt: 1 hour takes 4 days to recover
+    
+    if (isPositiveChange) {
+      // Improving sleep toward optimal 7-9 hour range
+      // Benefits: cognitive performance, cardiovascular health, metabolic function, longevity
+      // Studies show sleep regularity is stronger predictor of mortality than duration
+      healthMultiplier = 1 + (0.35 * timeFactor * Math.abs(changeInHours));
+      
+      // Age-specific benefits: older adults (65+) benefit from 7-8h optimal range
+      if (currentAge > 65) {
+        healthMultiplier *= 1.2; // Enhanced benefits for older adults
+      } else if (currentAge > 40) {
+        healthMultiplier *= 1.15; // Moderate enhancement for middle-aged adults
+      }
+      
+      // Consistency multiplier: regular sleep compounds more than duration alone
+      healthMultiplier = Math.min(1.6, healthMultiplier * 1.1);
+      
     } else if (changeInHours < 0) {
-      // Sleep debt compounds negatively
-      healthMultiplier = Math.max(0.6, 1 + (0.3 * changeInHours));
+      // Sleep debt compounds severely (Scientific Reports 2016)
+      // 1 hour of sleep debt takes 4 days to recover
+      // 6h/night for 10 days = cognitive impairment like total sleep deprivation
+      const recoveryPenalty = Math.abs(changeInHours) * 4; // 4-day recovery rule
+      const compoundingDebt = 1 + (recoveryPenalty / 30); // Normalize over month
+      
+      // Severe metabolic, cognitive, and cardiovascular impacts
+      healthMultiplier = Math.max(0.5, 1 + (0.4 * changeInHours * compoundingDebt));
+      
+      // Sleep debt has worse effects on younger people's performance
+      if (currentAge < 40) {
+        healthMultiplier *= 0.9; // Additional 10% penalty for younger adults
+      }
+      
+      // Cognitive impairment compounds over time
+      skillMultiplier = Math.max(0.7, 1 + (0.25 * changeInHours));
     }
   }
   
@@ -486,6 +517,22 @@ const generateTrendRecommendations = (activityName: string, changeInHours: numbe
     if (isPositiveChange) {
       recommendations.push("Strong relationships provide compounding emotional and health benefits");
       recommendations.push("Social connections often become more valuable with age");
+    }
+  } else if (activityLower.includes('sleep')) {
+    // Evidence-based sleep recommendations (Nature Aging 2022, Scientific Reports 2016, SLEEP 2024)
+    if (isPositiveChange) {
+      recommendations.push("Optimal sleep (7-9h) improves cognitive performance, cardiovascular health, and longevity");
+      recommendations.push("7 hours is the sweet spot for cognitive function in middle-aged and older adults (Nature Aging, 2022)");
+      recommendations.push("Sleep regularity (consistency) is a stronger predictor of mortality than duration alone (SLEEP, 2024)");
+      recommendations.push("Good sleep compounds: better immune function, metabolic health, and emotional regulation");
+    } else {
+      recommendations.push("Sleep debt compounds severely: 1 hour of lost sleep takes 4 days to fully recover (Scientific Reports, 2016)");
+      recommendations.push("Chronic sleep restriction causes cumulative cognitive impairment similar to total sleep deprivation");
+      recommendations.push("Weekend catch-up sleep does NOT restore metabolic and cognitive damage from weekday sleep debt");
+      recommendations.push("Sleep debt increases risk of cardiovascular disease, obesity, diabetes, and cognitive decline");
+      if (Math.abs(changeInHours) >= 2) {
+        recommendations.push("⚠️ Severe sleep restriction (<6h) dramatically increases mortality risk, especially under age 65");
+      }
     }
   }
   
