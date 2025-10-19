@@ -1780,7 +1780,7 @@ const LifeVisualizer: React.FC = () => {
     updateProjectionChart(projectedStats.futureProjections);
   }, [projectedStats, timelineSliderValue]);
 
-  // Calculate exercise optimization
+  // Calculate exercise optimization - only returns data if there's meaningful improvement opportunity
   const calculateExerciseOptimization = () => {
     if (!visualizeResult) return null;
     
@@ -1795,6 +1795,11 @@ const LifeVisualizer: React.FC = () => {
     const currentExercise = exerciseActivity.hours;
     const weeklyHours = currentExercise * 7;
     const recommendedWeekly = 2.5; // WHO recommends 150 minutes = 2.5 hours per week
+    
+    // If already in optimal range (2.5-5 hours/week), don't show recommendations
+    if (weeklyHours >= 2.5 && weeklyHours <= 5) {
+      return null;
+    }
     
     let fitnessLevel = '';
     let healthImpact = '';
@@ -1826,28 +1831,16 @@ const LifeVisualizer: React.FC = () => {
         'Join group fitness classes for motivation',
         'Use fitness apps to track progress'
       ];
-    } else if (weeklyHours >= 2.5 && weeklyHours <= 5) { // 150-300 minutes per week
-      fitnessLevel = 'Active';
-      healthImpact = 'Meeting guidelines with significant health benefits and longevity gains';
-      yearsImpact = 2;
-      optimizedHours = currentExercise; // Already optimal
-      recommendations = [
-        'Maintain your excellent exercise routine',
-        'Add variety with different activities',
-        'Include both cardio and strength training',
-        'Consider high-intensity interval training',
-        'Focus on consistency and injury prevention'
-      ];
-    } else if (weeklyHours > 5) { // More than 300 minutes per week
+    } else if (weeklyHours > 5) { // More than 300 minutes per week - potentially overtraining
       fitnessLevel = 'Highly Active';
-      healthImpact = 'Exceptional fitness level with maximum health and longevity benefits';
-      yearsImpact = 3.5;
-      optimizedHours = currentExercise;
+      healthImpact = 'Consider monitoring for overtraining - benefits plateau beyond 5 hours/week';
+      yearsImpact = 0.5; // Diminishing returns
+      optimizedHours = 0.7; // Suggest 5 hours/week = ~42 min daily
       recommendations = [
-        'Outstanding commitment to fitness!',
         'Ensure adequate recovery time between sessions',
-        'Monitor for overtraining symptoms',
-        'Consider periodization in your training',
+        'Monitor for overtraining symptoms (fatigue, decreased performance)',
+        'Consider reducing volume if experiencing burnout',
+        'Focus on quality over quantity',
         'Maintain proper nutrition and hydration'
       ];
     }
@@ -1865,11 +1858,11 @@ const LifeVisualizer: React.FC = () => {
       recommendations,
       optimizedHours,
       potentialGain: potentialGain.toFixed(1),
-      isOptimal: weeklyHours >= 2.5 && weeklyHours <= 5
+      isOptimal: false
     };
   };
 
-  // Calculate sleep optimization
+  // Calculate sleep optimization - only returns data if there's meaningful improvement opportunity
   const calculateSleepOptimization = () => {
     if (!visualizeResult) return null;
     
@@ -1878,7 +1871,11 @@ const LifeVisualizer: React.FC = () => {
 
     const currentSleep = sleepActivity.hours;
     const optimalSleep = 8; // Recommended 8 hours
-    const sleepDifference = Math.abs(currentSleep - optimalSleep);
+    
+    // If already in optimal range (7-9 hours), don't show recommendations
+    if (currentSleep >= 7 && currentSleep <= 9) {
+      return null;
+    }
     
     // Determine sleep quality and recommendations
     let sleepQuality = '';
@@ -1905,16 +1902,6 @@ const LifeVisualizer: React.FC = () => {
         'Create a dark, quiet sleep environment',
         'Limit caffeine after 2 PM',
         'Try relaxation techniques before bed'
-      ];
-    } else if (currentSleep >= 7 && currentSleep <= 9) {
-      sleepQuality = 'Optimal';
-      healthImpact = 'Supporting optimal health, cognitive function, and longevity';
-      yearsImpact = 0;
-      recommendations = [
-        'Maintain your excellent sleep schedule',
-        'Continue good sleep hygiene practices',
-        'Monitor sleep quality, not just quantity',
-        'Stay consistent with weekend sleep times'
       ];
     } else if (currentSleep > 9) {
       sleepQuality = 'Excessive';
