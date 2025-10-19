@@ -1662,10 +1662,16 @@ const LifeVisualizer: React.FC = () => {
   const updatePieChart = (activityStats: ActivityStat[]) => {
     if (!pieChartRef.current) return;
     
+    // If chart exists, update its data smoothly instead of destroying it
     if (pieChartInstance.current) {
-      pieChartInstance.current.destroy();
+      pieChartInstance.current.data.labels = activityStats.map(a => a.name);
+      pieChartInstance.current.data.datasets[0].data = activityStats.map(a => a.percentage);
+      pieChartInstance.current.data.datasets[0].backgroundColor = activityStats.map(a => a.color);
+      pieChartInstance.current.update('active'); // Smooth animation
+      return;
     }
     
+    // Create new chart if it doesn't exist
     const ctx = pieChartRef.current.getContext('2d');
     if (!ctx) return;
     
@@ -1682,6 +1688,10 @@ const LifeVisualizer: React.FC = () => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 750,
+          easing: 'easeInOutQuart'
+        },
         plugins: {
           legend: {
             position: 'right',
@@ -1712,10 +1722,16 @@ const LifeVisualizer: React.FC = () => {
   const updateProjectionChart = (projections: VisualizeResult['futureProjections']) => {
     if (!projectionChartRef.current) return;
     
+    // If chart exists, update its data smoothly instead of destroying it
     if (projectionChartInstance.current) {
-      projectionChartInstance.current.destroy();
+      projectionChartInstance.current.data.labels = projections.map(p => p.activity);
+      projectionChartInstance.current.data.datasets[0].data = projections.map(p => p.yearsSoFar);
+      projectionChartInstance.current.data.datasets[1].data = projections.map(p => p.yearsRemaining);
+      projectionChartInstance.current.update('active'); // Smooth animation
+      return;
     }
     
+    // Create new chart if it doesn't exist
     const ctx = projectionChartRef.current.getContext('2d');
     if (!ctx) return;
     
@@ -1738,6 +1754,10 @@ const LifeVisualizer: React.FC = () => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 750,
+          easing: 'easeInOutQuart'
+        },
         scales: {
           x: {
             stacked: false,
