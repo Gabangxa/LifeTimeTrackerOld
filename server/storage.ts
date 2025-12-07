@@ -1,7 +1,6 @@
-import { users, type User, type InsertUser, type UserLifeData, type InsertUserLifeData, type CountryLifeExpectancy, type InsertCountryLifeExpectancy } from "@shared/schema";
-
-// modify the interface with any CRUD methods
-// you might need
+import { users, userLifeData, countryLifeExpectancy, type User, type InsertUser, type UserLifeData, type InsertUserLifeData, type CountryLifeExpectancy, type InsertCountryLifeExpectancy } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -15,85 +14,61 @@ export interface IStorage {
   cacheLifeExpectancy(data: InsertCountryLifeExpectancy): Promise<CountryLifeExpectancy>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private userLifeData: Map<number, UserLifeData>;
-  private countries: any[];
-  private lifeExpectancyCache: Map<string, CountryLifeExpectancy>;
-  currentId: number;
-  currentLifeDataId: number;
-  currentLifeExpectancyId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.userLifeData = new Map();
-    this.countries = [];
-    this.lifeExpectancyCache = new Map();
-    this.currentId = 1;
-    this.currentLifeDataId = 1;
-    this.currentLifeExpectancyId = 1;
-  }
+export class DatabaseStorage implements IStorage {
+  private countryCache: any[] = [];
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
   
   async saveUserLifeData(data: InsertUserLifeData): Promise<UserLifeData> {
-    const id = this.currentLifeDataId++;
-    
-    // Create a properly typed UserLifeData object
-    const lifeData: UserLifeData = {
-      id,
-      userId: data.userId ?? null,
-      birthdate: data.birthdate,
-      countryCode: data.countryCode,
-      activities: data.activities,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt
-    };
-    
-    this.userLifeData.set(id, lifeData);
-    return lifeData;
+    const [savedData] = await db.insert(userLifeData).values(data).returning();
+    return savedData;
   }
   
   async getUserLifeData(id: number): Promise<UserLifeData | undefined> {
-    return this.userLifeData.get(id);
+    const [data] = await db.select().from(userLifeData).where(eq(userLifeData.id, id));
+    return data;
   }
 
   async getCachedCountries(): Promise<any[]> {
-    return this.countries;
+    return this.countryCache;
   }
 
   async cacheCountries(countries: any[]): Promise<void> {
-    this.countries = countries;
+    this.countryCache = countries;
   }
 
   async getCachedLifeExpectancy(countryCode: string): Promise<CountryLifeExpectancy | undefined> {
-    return this.lifeExpectancyCache.get(countryCode);
+    const [data] = await db.select().from(countryLifeExpectancy).where(eq(countryLifeExpectancy.countryCode, countryCode));
+    return data;
   }
 
   async cacheLifeExpectancy(data: InsertCountryLifeExpectancy): Promise<CountryLifeExpectancy> {
-    const id = this.currentLifeExpectancyId++;
-    const lifeExpectancy: CountryLifeExpectancy = {
-      id,
-      ...data
-    };
-    this.lifeExpectancyCache.set(data.countryCode, lifeExpectancy);
-    return lifeExpectancy;
+    const [cached] = await db.insert(countryLifeExpectancy)
+      .values(data)
+      .onConflictDoUpdate({
+        target: countryLifeExpectancy.countryCode,
+        set: { 
+          lifeExpectancy: data.lifeExpectancy,
+          dataYear: data.dataYear,
+          updatedAt: new Date()
+        }
+      })
+      .returning();
+    return cached;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
