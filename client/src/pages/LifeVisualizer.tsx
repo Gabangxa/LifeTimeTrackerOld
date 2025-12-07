@@ -13,7 +13,6 @@ import {
   Github, 
   Twitter, 
   Mail,
-  X,
   Search,
   AlertCircle,
   ArrowUpRight,
@@ -49,7 +48,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BuyMeCoffeeButton } from '@/components/BuyMeCoffeeButton';
 import { BuyMeCoffeeWidget } from '@/components/BuyMeCoffeeWidget';
@@ -84,6 +82,16 @@ import {
 } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { DailyQuote } from '@/components/DailyQuote';
+import { ActivityInput } from '@/components/ActivityInput';
+import { LifeTimeline } from '@/components/LifeTimeline';
+import { TrendAnalysis } from '@/components/TrendAnalysis';
+import { 
+  useLifeProjections, 
+  generateDynamicComparisons,
+  calculateTrendAnalysis,
+  calculateCostBenefitAnalysis,
+  calculateLifePhaseOptimization
+} from '@/hooks/useLifeProjections';
 
 // Define form schema
 const formSchema = z.object({
@@ -327,814 +335,6 @@ const getRecommendationMessage = (age: number, country: string, profession?: str
   
   return baseMessage + countryContext + '.';
 };
-
-// Advanced Analytics Functions
-
-// Trend analysis: Calculate compound effects of small changes
-const calculateTrendAnalysis = (
-  currentActivity: ActivityData, 
-  changeInHours: number, 
-  ageRange: { start: number; end: number },
-  currentAge: number
-): {
-  originalYears: number;
-  modifiedYears: number;
-  compoundEffect: number;
-  yearlyImpact: number;
-  recommendations: string[];
-  compoundingFactors: {
-    healthMultiplier: number;
-    skillMultiplier: number;
-    totalBenefit: number;
-  };
-} => {
-  const yearsInPeriod = ageRange.end - ageRange.start;
-  const activityLower = currentActivity.name.toLowerCase();
-  
-  // Calculate base time change (linear component)
-  // Clamp to minimum of 0 to prevent impossible negative totals
-  const originalHoursPerYear = currentActivity.hours * 365;
-  const modifiedHoursPerYear = Math.max(0, currentActivity.hours + changeInHours) * 365;
-  
-  const baseOriginalYears = (originalHoursPerYear * yearsInPeriod) / (365 * 24);
-  const baseModifiedYears = (modifiedHoursPerYear * yearsInPeriod) / (365 * 24);
-  
-  // Calculate compounding effects based on activity type and age
-  const compoundingFactors = calculateCompoundingFactors(activityLower, changeInHours, currentAge, yearsInPeriod, currentActivity.hours);
-  
-  // Apply compounding multipliers
-  const originalYears = baseOriginalYears;
-  const modifiedYears = baseModifiedYears * compoundingFactors.totalBenefit;
-  
-  const compoundEffect = modifiedYears - originalYears;
-  const yearlyImpact = compoundEffect / yearsInPeriod;
-  
-  const recommendations = generateTrendRecommendations(currentActivity.name, changeInHours, compoundEffect, compoundingFactors, currentActivity.hours);
-  
-  return {
-    originalYears,
-    modifiedYears,
-    compoundEffect,
-    yearlyImpact,
-    recommendations,
-    compoundingFactors
-  };
-};
-
-// Calculate compounding factors based on activity type, age, and duration
-const calculateCompoundingFactors = (
-  activityLower: string,
-  changeInHours: number,
-  currentAge: number,
-  yearsInPeriod: number,
-  currentActivityHours: number
-): {
-  healthMultiplier: number;
-  skillMultiplier: number;
-  totalBenefit: number;
-} => {
-  let healthMultiplier = 1.0;
-  let skillMultiplier = 1.0;
-  
-  const isPositiveChange = changeInHours > 0;
-  const ageFactor = Math.max(0.5, 1 - (currentAge - 25) / 100); // Younger people benefit more from habit changes
-  const timeFactor = Math.min(2.0, 1 + yearsInPeriod / 20); // Longer time periods show more compounding
-  
-  if (activityLower.includes('exercise') || activityLower.includes('fitness') || activityLower.includes('workout') || activityLower.includes('training')) {
-    // Research-based exercise calculations (WHO 2020, ATTICA 2025, British Journal Sports Medicine 2024)
-    // Optimal: 150-300 min/week moderate (21-43 min/day) OR 75-150 min/week vigorous (11-21 min/day)
-    // Sweet spot: 2.5-5 hours/week total activity
-    // Every 1 MET increase reduces all-cause death by 11-17%
-    
-    // Calculate adjusted total activity level (current + change)
-    // Clamp to minimum of 0 to prevent impossible negative totals
-    const adjustedHoursPerDay = Math.max(0, currentActivityHours + changeInHours);
-    const adjustedHoursPerWeek = adjustedHoursPerDay * 7;
-    const minutesPerWeek = adjustedHoursPerWeek * 60;
-    
-    // Determine exercise type for specific benefits
-    const isStrength = activityLower.includes('strength') || activityLower.includes('weight') || activityLower.includes('resistance');
-    const isAerobic = activityLower.includes('cardio') || activityLower.includes('running') || activityLower.includes('cycling') || activityLower.includes('aerobic');
-    const isCombined = (activityLower.includes('exercise') || activityLower.includes('workout')) && !isStrength && !isAerobic;
-    
-    if (isPositiveChange) {
-      // Each hour of exercise can add 3-7 hours of productive life (meta-analysis 2024)
-      const lifeExtensionFactor = 1 + (5 * Math.abs(changeInHours) / 24); // Average 5h gained per 1h exercise
-      
-      // WHO optimal range: 150-300 min/week moderate intensity
-      if (minutesPerWeek >= 150 && minutesPerWeek <= 300) {
-        // In optimal range - maximum benefits
-        healthMultiplier = 1 + (0.4 * ageFactor * timeFactor * Math.abs(changeInHours));
-      } else if (minutesPerWeek < 150) {
-        // Below optimal - still beneficial
-        healthMultiplier = 1 + (0.35 * ageFactor * timeFactor * Math.abs(changeInHours));
-      } else if (minutesPerWeek <= 600) {
-        // Above optimal but < 10h/week - good but diminishing returns
-        const diminishingFactor = 0.9;
-        healthMultiplier = 1 + (0.35 * ageFactor * timeFactor * Math.abs(changeInHours) * diminishingFactor);
-      } else {
-        // Beyond 10h/week - diminishing returns, potential overtraining
-        const diminishingFactor = 0.7;
-        healthMultiplier = 1 + (0.25 * ageFactor * timeFactor * Math.abs(changeInHours) * diminishingFactor);
-      }
-      
-      // Type-specific multipliers based on research
-      if (isStrength) {
-        // Strength training: 10-17% mortality reduction, 30% CVD reduction for women (2024 studies)
-        // 90 min/week = ~4 years biological age reduction
-        const strengthBonus = 1.15;
-        healthMultiplier *= strengthBonus;
-        skillMultiplier = 1.1; // Improved metabolism, bone density
-      } else if (isAerobic) {
-        // Aerobic: Every 1 MET increase = 11-17% mortality reduction
-        const aerobicBonus = 1.12;
-        healthMultiplier *= aerobicBonus;
-      } else if (isCombined) {
-        // Combined training: 40% mortality reduction vs 21% resistance alone (ATTICA 2025)
-        const combinedBonus = 1.2;
-        healthMultiplier *= combinedBonus;
-        skillMultiplier = 1.08;
-      }
-      
-      // Apply life extension factor
-      healthMultiplier = Math.min(1.8, healthMultiplier * Math.min(1.3, lifeExtensionFactor));
-      
-    } else {
-      // Reducing exercise - progressive health decline
-      // Sedentary lifestyle is major mortality risk factor
-      healthMultiplier = Math.max(0.6, 1 + (0.25 * changeInHours * ageFactor));
-      
-      // Cognitive and metabolic impacts from reduced activity
-      skillMultiplier = Math.max(0.85, 1 + (0.1 * changeInHours));
-    }
-  } else if (activityLower.includes('learning') || activityLower.includes('study') || activityLower.includes('skill')) {
-    if (isPositiveChange) {
-      // Learning compounds exponentially: knowledge builds on knowledge
-      skillMultiplier = 1 + (0.4 * ageFactor * timeFactor * Math.abs(changeInHours));
-      // Skills unlock opportunities that multiply over time
-      skillMultiplier = Math.min(2.0, skillMultiplier + 0.15 * yearsInPeriod / 10);
-    }
-  } else if (activityLower.includes('work') || activityLower.includes('career')) {
-    if (isPositiveChange && changeInHours <= 2) {
-      // Strategic work time compounds through career advancement
-      skillMultiplier = 1 + (0.25 * Math.min(1.2, ageFactor * 2) * Math.abs(changeInHours));
-    } else if (changeInHours > 2) {
-      // Overwork has diminishing returns and health costs
-      healthMultiplier = Math.max(0.8, 1 - 0.1 * (changeInHours - 2));
-    }
-  } else if (activityLower.includes('social') || activityLower.includes('family') || activityLower.includes('relationship')) {
-    if (isPositiveChange) {
-      // Strong relationships provide compounding emotional and health benefits
-      healthMultiplier = 1 + (0.2 * timeFactor * Math.abs(changeInHours));
-      // Social connections become more valuable with age
-      const socialAgeFactor = currentAge > 40 ? 1.3 : 1.0;
-      healthMultiplier *= socialAgeFactor;
-    }
-  } else if (activityLower.includes('sleep')) {
-    // Research-based sleep calculations (Nature Aging 2022, Scientific Reports 2016, SLEEP 2024)
-    // Optimal: 7-9 hours for adults, 7 hours is the sweet spot for cognition
-    // Sleep debt: 1 hour takes 4 days to recover
-    
-    if (isPositiveChange) {
-      // Improving sleep toward optimal 7-9 hour range
-      // Benefits: cognitive performance, cardiovascular health, metabolic function, longevity
-      // Studies show sleep regularity is stronger predictor of mortality than duration
-      healthMultiplier = 1 + (0.35 * timeFactor * Math.abs(changeInHours));
-      
-      // Age-specific benefits: older adults (65+) benefit from 7-8h optimal range
-      if (currentAge > 65) {
-        healthMultiplier *= 1.2; // Enhanced benefits for older adults
-      } else if (currentAge > 40) {
-        healthMultiplier *= 1.15; // Moderate enhancement for middle-aged adults
-      }
-      
-      // Consistency multiplier: regular sleep compounds more than duration alone
-      healthMultiplier = Math.min(1.6, healthMultiplier * 1.1);
-      
-    } else if (changeInHours < 0) {
-      // Sleep debt compounds severely (Scientific Reports 2016)
-      // 1 hour of sleep debt takes 4 days to recover
-      // 6h/night for 10 days = cognitive impairment like total sleep deprivation
-      const recoveryPenalty = Math.abs(changeInHours) * 4; // 4-day recovery rule
-      const compoundingDebt = 1 + (recoveryPenalty / 30); // Normalize over month
-      
-      // Severe metabolic, cognitive, and cardiovascular impacts
-      healthMultiplier = Math.max(0.5, 1 + (0.4 * changeInHours * compoundingDebt));
-      
-      // Sleep debt has worse effects on younger people's performance
-      if (currentAge < 40) {
-        healthMultiplier *= 0.9; // Additional 10% penalty for younger adults
-      }
-      
-      // Cognitive impairment compounds over time
-      skillMultiplier = Math.max(0.7, 1 + (0.25 * changeInHours));
-    }
-  }
-  
-  // Combine factors with realistic bounds
-  const totalBenefit = Math.max(0.5, Math.min(2.5, healthMultiplier * skillMultiplier));
-  
-  return {
-    healthMultiplier,
-    skillMultiplier,
-    totalBenefit
-  };
-};
-
-// Generate recommendations based on trend analysis
-const generateTrendRecommendations = (activityName: string, changeInHours: number, compoundEffect: number, compoundingFactors: any, currentActivityHours: number): string[] => {
-  const recommendations: string[] = [];
-  const isPositiveChange = changeInHours > 0;
-  const activityLower = activityName.toLowerCase();
-  
-  if (activityLower.includes('exercise') || activityLower.includes('fitness') || activityLower.includes('workout') || activityLower.includes('training')) {
-    // Evidence-based exercise recommendations (WHO 2020, ATTICA 2025, British Journal Sports Medicine 2024)
-    // Calculate adjusted total activity level (current + change)
-    // Clamp to minimum of 0 to prevent impossible negative totals
-    const adjustedHoursPerDay = Math.max(0, currentActivityHours + changeInHours);
-    const adjustedHoursPerWeek = adjustedHoursPerDay * 7;
-    const minutesPerWeek = adjustedHoursPerWeek * 60;
-    const isStrength = activityLower.includes('strength') || activityLower.includes('weight') || activityLower.includes('resistance');
-    const isAerobic = activityLower.includes('cardio') || activityLower.includes('running') || activityLower.includes('cycling') || activityLower.includes('aerobic');
-    
-    if (isPositiveChange) {
-      // WHO optimal range guidance
-      if (minutesPerWeek >= 150 && minutesPerWeek <= 300) {
-        recommendations.push("✓ You're in the WHO optimal range (150-300 min/week moderate intensity)");
-        recommendations.push("Each hour of exercise adds 3-7 hours of productive life through health benefits (meta-analysis 2024)");
-      } else if (minutesPerWeek < 150) {
-        recommendations.push(`Current: ${minutesPerWeek.toFixed(0)} min/week. WHO recommends 150-300 min/week for optimal benefits`);
-        recommendations.push("Even 15 min/day offers meaningful longevity improvements");
-      } else if (minutesPerWeek <= 600) {
-        recommendations.push("Above WHO guidelines - excellent! Benefits continue but start to plateau");
-      } else {
-        recommendations.push("⚠️ Beyond 10h/week: diminishing returns and potential overtraining risk");
-        recommendations.push("Consider quality over quantity and adequate recovery time");
-      }
-      
-      // Type-specific recommendations
-      if (isStrength) {
-        const strengthTips = [
-          "Strength training delivers 10-17% all-cause mortality reduction and 30% CVD reduction for women",
-          "Just 90 min/week correlates with ~4 years biological age reduction (2024 study)",
-          "Best results: 2-3 sessions weekly, 30-60 min total, hitting major muscle groups",
-          "Resistance training preserves muscle mass and bone density - critical as we age",
-          "Building strength now prevents frailty and maintains independence later in life"
-        ];
-        const selectedStrengthTips = strengthTips.sort(() => 0.5 - Math.random()).slice(0, 2);
-        selectedStrengthTips.forEach(tip => recommendations.push(tip));
-      } else if (isAerobic) {
-        const aerobicTips = [
-          "Every 1 MET fitness increase = 11-17% lower death risk - small gains matter",
-          "Cardio strengthens your heart, lowers blood pressure, and sharpens cognitive function",
-          "Aim for 3-4 sessions weekly at moderate-vigorous intensity for optimal results",
-          "Aerobic fitness is one of the strongest predictors of longevity",
-          "Your cardiovascular system adapts quickly - improvements visible within weeks"
-        ];
-        const selectedAerobicTips = aerobicTips.sort(() => 0.5 - Math.random()).slice(0, 2);
-        selectedAerobicTips.forEach(tip => recommendations.push(tip));
-      } else {
-        const combinedTips = [
-          "Combining aerobic + strength training delivers 40% mortality reduction (20-year ATTICA study 2025)",
-          "Mixing cardio and resistance work creates synergistic health benefits",
-          "The most comprehensive fitness gains come from varied exercise types",
-          "Diversifying your workouts prevents plateaus and reduces injury risk"
-        ];
-        const selectedCombinedTips = combinedTips.sort(() => 0.5 - Math.random()).slice(0, 2);
-        selectedCombinedTips.forEach(tip => recommendations.push(tip));
-      }
-      
-      const consistencyTips = [
-        "Consistency matters: Regular moderate activity often beats sporadic intense sessions",
-        "Building the habit is more important than perfecting each workout",
-        "Show up regularly - your future self will thank you"
-      ];
-      recommendations.push(consistencyTips[Math.floor(Math.random() * consistencyTips.length)]);
-      
-    } else {
-      const reductionMinutes = Math.abs(changeInHours) * 7 * 60;
-      const reductionWarnings = [
-        "⚠️ Reducing exercise elevates health risks - sedentary behavior is a leading mortality factor",
-        "⚠️ Cutting back on movement increases cardiovascular, metabolic, and cognitive risks",
-        "⚠️ Less activity means higher health risks - the sedentary lifestyle toll is well-documented"
-      ];
-      recommendations.push(reductionWarnings[Math.floor(Math.random() * reductionWarnings.length)]);
-      recommendations.push(`After this change: ${minutesPerWeek.toFixed(0)} min/week (down by ${reductionMinutes.toFixed(0)} min/week)`);
-      if (minutesPerWeek < 150) {
-        recommendations.push(`⚠️ This drops below WHO's 150 min/week minimum - significant impact on cardiovascular, metabolic, and cognitive health`);
-      } else {
-        recommendations.push("Above WHO minimum but still losing protective benefits from reduced activity");
-      }
-      const preservationTips = [
-        "Even 15-20 min/day preserves meaningful health benefits if time is limited",
-        "Brief daily movement maintains baseline health better than sporadic longer sessions",
-        "Short, consistent activity beats nothing - every minute counts"
-      ];
-      recommendations.push(preservationTips[Math.floor(Math.random() * preservationTips.length)]);
-      recommendations.push("Low-intensity options like walking or gentle stretching work if you're time-constrained");
-    }
-  } else if (activityLower.includes('learning') || activityLower.includes('study') || activityLower.includes('reading')) {
-    if (isPositiveChange) {
-      const learningTips = [
-        "Knowledge compounds exponentially - what you learn today becomes the foundation for tomorrow's insights",
-        "Each skill you master opens doors to entirely new fields and opportunities",
-        "Building strong fundamentals now pays dividends across your entire lifetime",
-        "The brain's neuroplasticity means learning literally reshapes your cognitive abilities",
-        "Deep work on challenging material creates lasting neural pathways"
-      ];
-      const selectedTips = learningTips.sort(() => 0.5 - Math.random()).slice(0, 2);
-      selectedTips.forEach(tip => recommendations.push(tip));
-      recommendations.push("Consider focusing on skills that complement each other for multiplied impact");
-    } else {
-      recommendations.push("Even brief daily learning sessions maintain cognitive sharpness and adaptability");
-      recommendations.push("Consider audiobooks or podcasts to preserve learning during other activities");
-    }
-  } else if (activityLower.includes('work') || activityLower.includes('career')) {
-    if (changeInHours > 1) {
-      const workWarnings = [
-        "Beyond a certain threshold, extra work hours yield diminishing returns on productivity and creativity",
-        "Research shows burnout compounds over time - recovery gets harder, not easier",
-        "Consider whether this time investment truly advances your long-term career trajectory",
-        "Peak performance requires rest and recovery - overwork can harm more than help"
-      ];
-      const selectedWarnings = workWarnings.sort(() => 0.5 - Math.random()).slice(0, 2);
-      selectedWarnings.forEach(warning => recommendations.push(warning));
-    } else if (isPositiveChange && changeInHours <= 1) {
-      const careerTips = [
-        "Strategic focus on high-leverage activities can transform your career trajectory",
-        "This extra time could compound into expertise, reputation, and advancement opportunities",
-        "Consider directing this time toward skill-building rather than busywork",
-        "Quality beats quantity - make sure this additional time is truly productive"
-      ];
-      const selectedTips = careerTips.sort(() => 0.5 - Math.random()).slice(0, 2);
-      selectedTips.forEach(tip => recommendations.push(tip));
-    } else {
-      recommendations.push("Reducing work hours can improve work-life balance and prevent burnout");
-      recommendations.push("Make sure remaining work time is focused on high-impact activities");
-    }
-  } else if (activityLower.includes('social') || activityLower.includes('family') || activityLower.includes('relationship')) {
-    if (isPositiveChange) {
-      const socialBenefits = [
-        "Harvard's 80-year study found relationships are the #1 predictor of happiness and longevity",
-        "Quality time with loved ones compounds emotionally - memories and bonds strengthen over time",
-        "Social connections act as a buffer against stress, anxiety, and physical illness",
-        "The value of strong relationships often becomes clearer as we age",
-        "Investing in relationships now creates a support network for life's challenges"
-      ];
-      const selectedBenefits = socialBenefits.sort(() => 0.5 - Math.random()).slice(0, 2);
-      selectedBenefits.forEach(benefit => recommendations.push(benefit));
-    } else {
-      recommendations.push("Even small amounts of quality time can maintain important relationships");
-      recommendations.push("Consider being more present during interactions rather than just spending more time");
-    }
-  } else if (activityLower.includes('sleep')) {
-    // Evidence-based sleep recommendations (Nature Aging 2022, Scientific Reports 2016, SLEEP 2024)
-    if (isPositiveChange) {
-      const sleepBenefits = [
-        "Quality sleep (7-9h) enhances cognitive performance, cardiovascular health, and overall longevity",
-        "Research shows 7 hours is optimal for cognitive function in middle-aged and older adults (Nature Aging, 2022)",
-        "Consistent sleep schedules predict mortality better than duration alone (SLEEP, 2024)",
-        "Adequate rest strengthens immune function, metabolic health, and emotional stability",
-        "Your brain consolidates memories and clears toxins during deep sleep phases",
-        "Quality sleep improves decision-making, creativity, and problem-solving abilities"
-      ];
-      const selectedBenefits = sleepBenefits.sort(() => 0.5 - Math.random()).slice(0, 3);
-      selectedBenefits.forEach(benefit => recommendations.push(benefit));
-    } else {
-      const sleepWarnings = [
-        "Sleep debt has a brutal 4:1 recovery ratio - losing 1 hour takes 4 days to fully recover (Scientific Reports, 2016)",
-        "Chronic sleep restriction creates cognitive impairment similar to total sleep deprivation",
-        "Weekend catch-up sleep doesn't undo the metabolic and cognitive damage from weekday deficits",
-        "Insufficient sleep elevates risks for cardiovascular disease, obesity, diabetes, and cognitive decline",
-        "Your body doesn't adapt to sleep deprivation - the damage accumulates silently"
-      ];
-      const selectedWarnings = sleepWarnings.sort(() => 0.5 - Math.random()).slice(0, 3);
-      selectedWarnings.forEach(warning => recommendations.push(warning));
-      if (Math.abs(changeInHours) >= 2) {
-        recommendations.push("⚠️ Severe sleep restriction (<6h) dramatically increases mortality risk, especially under age 65");
-      }
-    }
-  }
-  
-  return recommendations;
-};
-
-// Cost-benefit analysis of time reallocation
-const calculateCostBenefitAnalysis = (
-  fromActivity: ActivityData,
-  toActivity: ActivityData,
-  hoursToReallocate: number,
-  userAge: number,
-  lifeExpectancy: number
-): {
-  opportunityCost: {
-    activity: string;
-    yearsLost: number;
-    qualitativeImpact: string;
-  };
-  benefit: {
-    activity: string;
-    yearsGained: number;
-    qualitativeImpact: string;
-    potentialROI: string;
-  };
-  netImpact: {
-    timeValue: number;
-    recommendation: string;
-    confidence: 'high' | 'medium' | 'low';
-  };
-} => {
-  const remainingYears = lifeExpectancy - userAge;
-  const yearsLost = (hoursToReallocate * 365 * remainingYears) / (365 * 24);
-  const yearsGained = yearsLost; // Same time amount, different activity
-  
-  const fromImpact = getActivityQualitativeImpact(fromActivity.name, false);
-  const toImpact = getActivityQualitativeImpact(toActivity.name, true);
-  
-  const timeValue = calculateTimeValue(fromActivity.name, toActivity.name, hoursToReallocate, userAge);
-  const recommendation = generateReallocationRecommendation(fromActivity.name, toActivity.name, timeValue, userAge);
-  const confidence = calculateConfidenceLevel(fromActivity.name, toActivity.name, userAge);
-  
-  return {
-    opportunityCost: {
-      activity: fromActivity.name,
-      yearsLost,
-      qualitativeImpact: fromImpact
-    },
-    benefit: {
-      activity: toActivity.name,
-      yearsGained,
-      qualitativeImpact: toImpact,
-      potentialROI: calculatePotentialROI(toActivity.name, hoursToReallocate, userAge)
-    },
-    netImpact: {
-      timeValue,
-      recommendation,
-      confidence
-    }
-  };
-};
-
-// Calculate qualitative impact of activities
-const getActivityQualitativeImpact = (activityName: string, isGaining: boolean): string => {
-  const activityLower = activityName.toLowerCase();
-  const action = isGaining ? 'Gaining' : 'Losing';
-  
-  if (activityLower.includes('exercise') || activityLower.includes('fitness')) {
-    return isGaining ? 'Improved health, energy, and longevity' : 'Potential health decline and reduced energy';
-  } else if (activityLower.includes('work') || activityLower.includes('career')) {
-    return isGaining ? 'Career advancement and financial growth' : 'Reduced earning potential and career progress';
-  } else if (activityLower.includes('family') || activityLower.includes('social')) {
-    return isGaining ? 'Stronger relationships and emotional wellbeing' : 'Weakened relationships and social connections';
-  } else if (activityLower.includes('learning') || activityLower.includes('study')) {
-    return isGaining ? 'Knowledge accumulation and skill development' : 'Missed learning opportunities and skill stagnation';
-  } else if (activityLower.includes('leisure') || activityLower.includes('entertainment')) {
-    return isGaining ? 'Improved work-life balance and stress relief' : 'Potential stress increase and reduced relaxation';
-  } else if (activityLower.includes('sleep')) {
-    return isGaining ? 'Better health, cognitive function, and mood' : 'Cognitive decline, health issues, and mood problems';
-  }
-  
-  return isGaining ? 'Potential positive life impact' : 'Potential negative life impact';
-};
-
-// Calculate time value score (-100 to +100)
-const calculateTimeValue = (fromActivity: string, toActivity: string, hours: number, age: number): number => {
-  const fromScore = getActivityValueScore(fromActivity, age);
-  const toScore = getActivityValueScore(toActivity, age);
-  
-  const netScore = (toScore - fromScore) * (hours / 24) * 100; // Normalize to percentage scale
-  return Math.max(-100, Math.min(100, netScore));
-};
-
-// Get activity value score based on life phase
-const getActivityValueScore = (activityName: string, age: number): number => {
-  const activityLower = activityName.toLowerCase();
-  
-  // Age-based multipliers
-  const youthMultiplier = age < 30 ? 1.2 : age < 50 ? 1.0 : 0.8;
-  const middleAgeMultiplier = age >= 30 && age < 60 ? 1.2 : 1.0;
-  const seniorMultiplier = age >= 60 ? 1.2 : 1.0;
-  
-  if (activityLower.includes('exercise')) return 0.9 * (age > 40 ? 1.3 : 1.0);
-  if (activityLower.includes('career') || activityLower.includes('work')) return 0.8 * middleAgeMultiplier;
-  if (activityLower.includes('learning') || activityLower.includes('study')) return 0.85 * youthMultiplier;
-  if (activityLower.includes('family') || activityLower.includes('social')) return 0.75 * (age > 30 ? 1.2 : 1.0);
-  if (activityLower.includes('leisure') || activityLower.includes('entertainment')) return 0.4;
-  if (activityLower.includes('sleep')) return 0.95;
-  
-  return 0.5; // Default neutral value
-};
-
-// Generate reallocation recommendation
-const generateReallocationRecommendation = (fromActivity: string, toActivity: string, timeValue: number, age: number): string => {
-  if (timeValue > 50) {
-    return `Highly recommended: This reallocation aligns well with your life phase and priorities.`;
-  } else if (timeValue > 20) {
-    return `Recommended: This change could provide meaningful benefits for your current life stage.`;
-  } else if (timeValue > -20) {
-    return `Neutral: This reallocation has mixed benefits. Consider your personal priorities.`;
-  } else if (timeValue > -50) {
-    return `Caution: This change may not align with optimal time allocation for your age.`;
-  } else {
-    return `Not recommended: This reallocation could significantly impact your long-term wellbeing.`;
-  }
-};
-
-// Calculate confidence level
-const calculateConfidenceLevel = (fromActivity: string, toActivity: string, age: number): 'high' | 'medium' | 'low' => {
-  const wellStudiedActivities = ['exercise', 'sleep', 'work', 'learning'];
-  const fromStudied = wellStudiedActivities.some(activity => fromActivity.toLowerCase().includes(activity));
-  const toStudied = wellStudiedActivities.some(activity => toActivity.toLowerCase().includes(activity));
-  
-  if (fromStudied && toStudied) return 'high';
-  if (fromStudied || toStudied) return 'medium';
-  return 'low';
-};
-
-// Calculate potential ROI
-const calculatePotentialROI = (activityName: string, hours: number, age: number): string => {
-  const activityLower = activityName.toLowerCase();
-  
-  if (activityLower.includes('exercise')) {
-    const healthBenefit = hours * 365 * 3; // Rough health benefit multiplier
-    return `Potential ${healthBenefit.toFixed(0)} additional healthy days per year`;
-  } else if (activityLower.includes('learning') || activityLower.includes('skill')) {
-    const careerBoost = age < 40 ? 'significant' : age < 60 ? 'moderate' : 'personal satisfaction';
-    return `${careerBoost} career advancement potential`;
-  } else if (activityLower.includes('work') || activityLower.includes('career')) {
-    return hours > 2 ? 'Diminishing returns likely' : 'Potential career acceleration';
-  } else if (activityLower.includes('family') || activityLower.includes('social')) {
-    return 'Enhanced life satisfaction and emotional support';
-  }
-  
-  return 'Qualitative life improvement';
-};
-
-// Life phase optimization
-const calculateLifePhaseOptimization = (
-  currentAge: number,
-  activities: ActivityData[],
-  lifeExpectancy: number
-): {
-  currentPhase: string;
-  recommendations: {
-    phase: string;
-    ageRange: string;
-    priority: string;
-    suggestedAllocations: { activity: string; hours: number; reason: string }[];
-    keyFocus: string[];
-  }[];
-  transitionPlanning: {
-    nextPhase: string;
-    timeToTransition: number;
-    preparationSteps: string[];
-  };
-} => {
-  const currentPhase = determineLifePhase(currentAge);
-  const recommendations = generatePhaseRecommendations(currentAge, lifeExpectancy);
-  const transitionPlanning = calculateTransitionPlanning(currentAge, lifeExpectancy);
-  
-  return {
-    currentPhase,
-    recommendations,
-    transitionPlanning
-  };
-};
-
-// Determine current life phase
-const determineLifePhase = (age: number): string => {
-  if (age < 25) return 'Foundation Building';
-  if (age < 35) return 'Career Establishment';
-  if (age < 45) return 'Growth & Family';
-  if (age < 55) return 'Peak Performance';
-  if (age < 65) return 'Transition Planning';
-  return 'Legacy & Fulfillment';
-};
-
-// Generate phase-specific recommendations
-const generatePhaseRecommendations = (currentAge: number, lifeExpectancy: number) => {
-  const phases = [
-    {
-      phase: 'Foundation Building',
-      ageRange: '18-25',
-      priority: 'Learning & Skill Development',
-      suggestedAllocations: [
-        { activity: 'Learning/Study', hours: 4, reason: 'Build foundational knowledge and skills' },
-        { activity: 'Exercise', hours: 1.5, reason: 'Establish healthy habits early' },
-        { activity: 'Social Time', hours: 3, reason: 'Build lifelong relationships and network' },
-        { activity: 'Work/Internships', hours: 6, reason: 'Gain practical experience' }
-      ],
-      keyFocus: ['Education completion', 'Habit formation', 'Network building', 'Self-discovery']
-    },
-    {
-      phase: 'Career Establishment',
-      ageRange: '25-35',
-      priority: 'Professional Growth & Relationships',
-      suggestedAllocations: [
-        { activity: 'Work/Career', hours: 8, reason: 'Establish career trajectory' },
-        { activity: 'Learning/Skills', hours: 2, reason: 'Stay competitive and grow' },
-        { activity: 'Exercise', hours: 1.5, reason: 'Maintain health during busy period' },
-        { activity: 'Relationship/Family', hours: 3, reason: 'Build lasting partnerships' }
-      ],
-      keyFocus: ['Career advancement', 'Financial stability', 'Relationship building', 'Health maintenance']
-    },
-    {
-      phase: 'Growth & Family',
-      ageRange: '35-45',
-      priority: 'Balance & Family Development',
-      suggestedAllocations: [
-        { activity: 'Work/Career', hours: 7.5, reason: 'Peak earning potential' },
-        { activity: 'Family Time', hours: 4, reason: 'Child development critical period' },
-        { activity: 'Exercise', hours: 1.5, reason: 'Counter sedentary work lifestyle' },
-        { activity: 'Personal Time', hours: 2, reason: 'Prevent burnout and maintain identity' }
-      ],
-      keyFocus: ['Family development', 'Career peak', 'Financial growth', 'Work-life balance']
-    },
-    {
-      phase: 'Peak Performance',
-      ageRange: '45-55',
-      priority: 'Leadership & Wealth Building',
-      suggestedAllocations: [
-        { activity: 'Work/Leadership', hours: 7, reason: 'Maximum impact and influence' },
-        { activity: 'Exercise', hours: 2, reason: 'Combat age-related health decline' },
-        { activity: 'Family/Mentoring', hours: 3, reason: 'Guide next generation' },
-        { activity: 'Learning/Growth', hours: 2, reason: 'Stay relevant and adaptable' }
-      ],
-      keyFocus: ['Leadership development', 'Wealth accumulation', 'Health preservation', 'Legacy building']
-    },
-    {
-      phase: 'Transition Planning',
-      ageRange: '55-65',
-      priority: 'Preparation & Health Focus',
-      suggestedAllocations: [
-        { activity: 'Work/Transition', hours: 6, reason: 'Prepare for retirement transition' },
-        { activity: 'Exercise/Health', hours: 2.5, reason: 'Invest in long-term health' },
-        { activity: 'Hobbies/Interests', hours: 3, reason: 'Develop retirement activities' },
-        { activity: 'Family/Relationships', hours: 3, reason: 'Strengthen support systems' }
-      ],
-      keyFocus: ['Retirement planning', 'Health optimization', 'Interest development', 'Relationship deepening']
-    },
-    {
-      phase: 'Legacy & Fulfillment',
-      ageRange: '65+',
-      priority: 'Health & Contribution',
-      suggestedAllocations: [
-        { activity: 'Exercise/Health', hours: 3, reason: 'Maintain independence and vitality' },
-        { activity: 'Hobbies/Interests', hours: 4, reason: 'Pursue lifelong passions' },
-        { activity: 'Family/Community', hours: 4, reason: 'Share wisdom and stay connected' },
-        { activity: 'Rest/Relaxation', hours: 2, reason: 'Enjoy well-earned leisure' }
-      ],
-      keyFocus: ['Health maintenance', 'Purpose fulfillment', 'Wisdom sharing', 'Enjoyment']
-    }
-  ];
-  
-  return phases;
-};
-
-// Calculate transition planning
-const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: number) => {
-  let nextPhase = '';
-  let timeToTransition = 0;
-  let preparationSteps: string[] = [];
-  
-  if (currentAge < 25) {
-    nextPhase = 'Career Establishment';
-    timeToTransition = 25 - currentAge;
-    preparationSteps = [
-      'Complete education and certifications',
-      'Build professional network',
-      'Develop core skills in chosen field',
-      'Gain internship or entry-level experience'
-    ];
-  } else if (currentAge < 35) {
-    nextPhase = 'Growth & Family';
-    timeToTransition = 35 - currentAge;
-    preparationSteps = [
-      'Achieve financial stability',
-      'Develop leadership skills',
-      'Consider family planning',
-      'Build emergency fund and investments'
-    ];
-  } else if (currentAge < 45) {
-    nextPhase = 'Peak Performance';
-    timeToTransition = 45 - currentAge;
-    preparationSteps = [
-      'Develop expertise and specialization',
-      'Build wealth and assets',
-      'Strengthen family relationships',
-      'Focus on health and fitness'
-    ];
-  } else if (currentAge < 55) {
-    nextPhase = 'Transition Planning';
-    timeToTransition = 55 - currentAge;
-    preparationSteps = [
-      'Maximize earning potential',
-      'Develop leadership and mentoring skills',
-      'Diversify investments',
-      'Maintain health and energy'
-    ];
-  } else if (currentAge < 65) {
-    nextPhase = 'Legacy & Fulfillment';
-    timeToTransition = 65 - currentAge;
-    preparationSteps = [
-      'Plan retirement finances',
-      'Develop post-career interests',
-      'Focus on health optimization',
-      'Strengthen family and social connections'
-    ];
-  } else {
-    nextPhase = 'Continued Fulfillment';
-    timeToTransition = lifeExpectancy - currentAge;
-    preparationSteps = [
-      'Maintain physical and mental health',
-      'Stay engaged with community',
-      'Share knowledge and experience',
-      'Focus on meaningful relationships'
-    ];
-  }
-  
-  return {
-    nextPhase,
-    timeToTransition,
-    preparationSteps
-  };
-};
-
-// Activity comparisons - focused on meaningful, data-driven insights
-const ACTIVITY_COMPARISONS: Record<string, Array<{icon: string, text: (years: number) => string}>> = {
-  'Sleep': [
-    { 
-      icon: 'fa-clock', 
-      text: (years) => `${formatNumber(years * 365 * 8)} total hours of rest and recovery` 
-    }
-  ],
-  'Work': [
-    { 
-      icon: 'fa-clock', 
-      text: (years) => `${formatNumber(years * 365 * 8)} hours of professional work` 
-    }
-  ],
-  'Commute': [
-    { 
-      icon: 'fa-road', 
-      text: (years) => `Approximately ${formatNumber(years * 15000)} miles traveled` 
-    }
-  ],
-  'Exercise': [
-    { 
-      icon: 'fa-fire', 
-      text: (years) => `Approximately ${formatNumber(years * 365 * 400)} calories burned` 
-    }
-  ],
-  'Reading': [
-    { 
-      icon: 'fa-book', 
-      text: (years) => `Approximately ${Math.floor(years * 50)} books read (assuming 200 pages/book)` 
-    }
-  ],
-  'Studying': [
-    { 
-      icon: 'fa-graduation-cap', 
-      text: (years) => `${Math.floor(years / 4)} college degrees equivalent in study time` 
-    }
-  ]
-};
-
-// Generic comparison generators for all activities - focused on factual data
-const GENERIC_COMPARISONS: Array<{icon: string, text: (years: number, activity: string) => string}> = [
-  {
-    icon: 'fa-clock', 
-    text: (years, activity) => `${formatNumber(years * 365 * 24)} total hours spent on ${activity.toLowerCase()}`
-  },
-  {
-    icon: 'fa-calendar-days', 
-    text: (years, activity) => `${formatNumber(years * 365)} days dedicated to this activity`
-  }
-];
-
-// Function to generate dynamic comparisons for any activity
-const generateDynamicComparisons = (activityName: string, years: number): Array<{icon: string, text: string}> => {
-  // Use predefined comparisons if available
-  if (ACTIVITY_COMPARISONS[activityName]) {
-    return ACTIVITY_COMPARISONS[activityName].map(comp => ({
-      icon: comp.icon,
-      text: comp.text(years)
-    }));
-  }
-  
-  // Otherwise, generate dynamic comparisons
-  // Pick 2 random comparisons from the generic list
-  const randomIndices = Array.from(Array(GENERIC_COMPARISONS.length).keys())
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 2);
-  
-  return randomIndices.map(index => ({
-    icon: GENERIC_COMPARISONS[index].icon,
-    text: GENERIC_COMPARISONS[index].text(years, activityName)
-  }));
-};
-
-
 const LifeVisualizer: React.FC = () => {
 
   const [darkMode, setDarkMode] = useState<boolean>(true);
@@ -1187,6 +387,14 @@ const LifeVisualizer: React.FC = () => {
   const [suggestionMessage, setSuggestionMessage] = useState('');
   const [suggestedActivities, setSuggestedActivities] = useState<ActivityData[]>([]);
 
+  // Use the life projections hook for analytics calculations
+  // Use form activities directly (which have accurate hours) instead of reverse-calculating from activityStats
+  const lifeProjections = useLifeProjections({
+    activities: activities,
+    currentAge: visualizeResult?.age ?? 30,
+    lifeExpectancy: visualizeResult?.lifeExpectancy ?? 80
+  });
+
   // State for advanced analytics
   const [analyticsData, setAnalyticsData] = useState<{
     trendAnalysis: any[];
@@ -1224,97 +432,89 @@ const LifeVisualizer: React.FC = () => {
     });
   };
 
-  // Calculate advanced analytics when visualization result changes
+  // Stable key for activities to trigger analytics recalculation (includes all properties)
+  const activitiesKey = useMemo(() => 
+    activities.map(a => `${a.id}:${a.name}:${a.hours}:${a.daysPerWeek}:${a.icon}:${a.color}`).join('|'),
+    [activities]
+  );
+
+  // Calculate advanced analytics when visualization result or activities change
   useEffect(() => {
     if (!visualizeResult) return;
 
     try {
-      const currentAge = visualizeResult.age;
-      const lifeExpectancy = visualizeResult.lifeExpectancy;
-      const activities = visualizeResult.activityStats;
+      const expectancy = visualizeResult.lifeExpectancy;
+      
+      // Use projected age if timeline slider is active, otherwise use current age
+      const effectiveAge = (timelineSliderValue > 0 && projectedAge !== null) 
+        ? projectedAge 
+        : visualizeResult.age;
+      
+      // Explicit bail-out: disable analytics when age >= life expectancy (invalid horizon)
+      if (effectiveAge >= expectancy) {
+        setAnalyticsData(null);
+        return;
+      }
+      
+      // Calculate remaining years (guaranteed positive due to guard above)
+      const remainingYears = expectancy - effectiveAge;
 
-      // Calculate trend analysis for each activity with small changes
+      // Calculate trend analysis using raw functions with effective age (handles timeline projections)
       const trendAnalysis = activities.map(activity => {
-        const changeOptions = [-1, -0.5, 0.5, 1]; // Hours to add/remove
+        const changeOptions = [-1, -0.5, 0.5, 1];
         const trends = changeOptions.map(change => ({
           change,
           analysis: calculateTrendAnalysis(
-            { id: '', name: activity.name, hours: activity.years * 24 / (lifeExpectancy - 18), daysPerWeek: 7, icon: activity.icon, color: activity.color },
+            activity,
             change,
-            { start: currentAge, end: lifeExpectancy },
-            currentAge
+            { start: effectiveAge, end: expectancy },
+            effectiveAge
           )
         }));
         
         return {
           activity: activity.name,
-          currentHours: (activity.years * 24 / (lifeExpectancy - 18)).toFixed(1),
+          currentHours: activity.hours.toFixed(1),
           trends,
-          icon: activity.icon,
-          color: activity.color
+          icon: activity.icon || 'fa-circle',
+          color: activity.color || '#3B82F6'
         };
       });
 
-      // Calculate cost-benefit analysis for common reallocations
+      // Calculate cost-benefit analysis using raw function with effective age
       const costBenefitAnalysis = [];
       for (let i = 0; i < activities.length; i++) {
         for (let j = 0; j < activities.length; j++) {
           if (i !== j) {
-            const fromActivity = {
-              id: '', 
-              name: activities[i].name, 
-              hours: activities[i].years * 24 / (lifeExpectancy - 18),
-              daysPerWeek: 7,
-              icon: activities[i].icon,
-              color: activities[i].color
-            };
-            const toActivity = {
-              id: '', 
-              name: activities[j].name, 
-              hours: activities[j].years * 24 / (lifeExpectancy - 18),
-              daysPerWeek: 7,
-              icon: activities[j].icon,
-              color: activities[j].color
-            };
-            
             const analysis = calculateCostBenefitAnalysis(
-              fromActivity,
-              toActivity,
+              activities[i],
+              activities[j],
               0.5, // 30 minutes reallocation
-              currentAge,
-              lifeExpectancy
+              effectiveAge,
+              expectancy
             );
             
             costBenefitAnalysis.push({
               from: activities[i].name,
               to: activities[j].name,
               analysis,
-              fromColor: activities[i].color,
-              toColor: activities[j].color
+              fromColor: activities[i].color || '#3B82F6',
+              toColor: activities[j].color || '#3B82F6'
             });
           }
         }
       }
 
-      // Calculate life phase optimization
-      const activityData = activities.map(activity => ({
-        id: '',
-        name: activity.name,
-        hours: activity.years * 24 / (lifeExpectancy - 18),
-        daysPerWeek: 7,
-        icon: activity.icon,
-        color: activity.color
-      }));
-      
+      // Calculate life phase optimization using raw function with effective age
       const lifePhaseOptimization = calculateLifePhaseOptimization(
-        currentAge,
-        activityData,
-        lifeExpectancy
+        effectiveAge,
+        activities,
+        expectancy
       );
 
       setAnalyticsData({
         trendAnalysis,
-        costBenefitAnalysis: costBenefitAnalysis.slice(0, 8), // Limit to top 8 for UI performance
+        costBenefitAnalysis: costBenefitAnalysis.slice(0, 8),
         lifePhaseOptimization
       });
 
@@ -1322,7 +522,8 @@ const LifeVisualizer: React.FC = () => {
       console.error('Error calculating analytics:', error);
       setAnalyticsData(null);
     }
-  }, [visualizeResult]);
+    // Dependencies: visualizeResult primitives, activitiesKey, timeline state
+  }, [visualizeResult?.age, visualizeResult?.lifeExpectancy, activitiesKey, timelineSliderValue, projectedAge, activities]);
 
   // Add manual life expectancy state
   const [manualLifeExpectancy, setManualLifeExpectancy] = useState<string>('');
@@ -1388,44 +589,6 @@ const LifeVisualizer: React.FC = () => {
     }
   };
 
-  // Add custom activity
-  const addActivity = () => {
-    // No hard limit on activities - only constrained by 24-hour daily limit
-    // Generate a color from an expanded palette
-    const colorPalette = [
-      '#D6293B', // Red
-      '#F7893B', // Orange
-      '#FBBF24', // Yellow
-      '#34D399', // Green
-      '#60A5FA', // Light Blue
-      '#A78BFA', // Purple
-      '#F472B6', // Pink
-      '#FB923C', // Amber
-      '#4ADE80', // Lime
-      '#38BDF8'  // Sky
-    ];
-    
-    const colorIndex = (activities.length - 3) % colorPalette.length;
-    const color = colorIndex >= 0 ? colorPalette[colorIndex] : getRandomColorHex();
-    
-    form.setValue('activities', [
-      ...activities,
-      { 
-        id: uuidv4(), 
-        name: '', 
-        hours: 1,
-        daysPerWeek: 7,
-        icon: 'fa-circle', 
-        color
-      }
-    ]);
-  };
-
-  // Remove activity
-  const removeActivity = (id: string) => {
-    form.setValue('activities', activities.filter(activity => activity.id !== id));
-  };
-
   // Calculate projected stats at a specific point in time
   const calculateProjectedStats = (
     formData: FormData, 
@@ -1460,11 +623,14 @@ const LifeVisualizer: React.FC = () => {
       };
     });
 
-    // Calculate future projections
+    // Calculate remaining time (clamped to prevent negative values)
+    const remainingYearsInLife = Math.max(0, expectancy - projectedAge);
+
+    // Calculate future projections (with guards for edge cases)
     const futureProjections = formData.activities.map(activity => {
       const yearsSoFar = calculateActivityYears(activity.hours, projectedAliveDays, activity.daysPerWeek);
       const effectiveDailyHours = (activity.hours * activity.daysPerWeek) / 7;
-      const yearsRemaining = (effectiveDailyHours / 24) * (expectancy - projectedAge);
+      const yearsRemaining = Math.max(0, (effectiveDailyHours / 24) * remainingYearsInLife);
       
       return {
         activity: activity.name,
@@ -1473,7 +639,7 @@ const LifeVisualizer: React.FC = () => {
       };
     });
 
-    // Calculate free time using effective daily hours
+    // Calculate free time using effective daily hours (with guards)
     const dailyActivitiesHours = formData.activities.reduce((sum, activity) => {
       return sum + (activity.hours * activity.daysPerWeek) / 7;
     }, 0);
@@ -1482,13 +648,13 @@ const LifeVisualizer: React.FC = () => {
     futureProjections.push({
       activity: 'Free Time',
       yearsSoFar: calculateActivityYears(freeHoursDaily, projectedAliveDays, 7),
-      yearsRemaining: (freeHoursDaily / 24) * (expectancy - projectedAge)
+      yearsRemaining: Math.max(0, (freeHoursDaily / 24) * remainingYearsInLife)
     });
 
     return {
       activityStats,
       futureProjections,
-      daysRemaining: Math.max(0, (expectancy - projectedAge) * 365)
+      daysRemaining: Math.max(0, remainingYearsInLife * 365)
     };
   };
 
@@ -1556,10 +722,13 @@ const LifeVisualizer: React.FC = () => {
       const weeksTotal = calculateTotalWeeks(expectancy);
       const weeksRemaining = calculateRemainingWeeks(birthdate, expectancy);
 
+      // Calculate remaining years (clamped to prevent negative values)
+      const remainingLifeYears = Math.max(0, expectancy - age);
+
       const futureProjections = data.activities.map(activity => {
         const yearsSoFar = calculateActivityYears(activity.hours, aliveDays, activity.daysPerWeek);
         const effectiveDailyHours = (activity.hours * activity.daysPerWeek) / 7;
-        const yearsRemaining = (effectiveDailyHours / 24) * (expectancy - age);
+        const yearsRemaining = Math.max(0, (effectiveDailyHours / 24) * remainingLifeYears);
         
         return {
           activity: activity.name,
@@ -1568,7 +737,7 @@ const LifeVisualizer: React.FC = () => {
         };
       });
 
-      // Calculate free time as remaining hours using effective daily hours
+      // Calculate free time as remaining hours using effective daily hours (with guards)
       const dailyActivitiesHours = data.activities.reduce((sum, activity) => {
         return sum + (activity.hours * activity.daysPerWeek) / 7;
       }, 0);
@@ -1577,7 +746,7 @@ const LifeVisualizer: React.FC = () => {
       futureProjections.push({
         activity: 'Free Time',
         yearsSoFar: calculateActivityYears(freeHoursDaily, aliveDays, 7),
-        yearsRemaining: (freeHoursDaily / 24) * (expectancy - age)
+        yearsRemaining: Math.max(0, (freeHoursDaily / 24) * remainingLifeYears)
       });
 
       setVisualizeResult({
@@ -2243,129 +1412,11 @@ const LifeVisualizer: React.FC = () => {
                   </div>
 
                   {/* Activity Inputs */}
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        Daily Activities (hours)
-                      </Label>
-                      <div className="flex items-center gap-3">
-                        {/* Hours Usage Indicator */}
-                        <div className="flex items-center gap-1 text-xs">
-                          <div className={`font-medium ${
-                            activities.reduce((sum, activity) => sum + activity.hours, 0) > 24 
-                              ? 'text-red-500' 
-                              : activities.reduce((sum, activity) => sum + activity.hours, 0) > 20
-                                ? 'text-amber-500'
-                                : 'text-green-500'
-                          }`}>
-                            {activities.reduce((sum, activity) => sum + activity.hours, 0).toFixed(1)}/24 hrs
-                          </div>
-                          <AlertCircle className={`h-3 w-3 ${
-                            activities.reduce((sum, activity) => sum + activity.hours, 0) > 24 
-                              ? 'text-red-500' 
-                              : 'hidden'
-                          }`} />
-                        </div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={addActivity}
-                                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 group"
-                              >
-                                <Sparkles className="h-4 w-4 mr-1 group-hover:animate-pulse" />
-                                Add Custom
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs">
-                              <p className="text-sm">Add your own personalized activity to track how you spend your time. Add as many as you need - only limited by the 24-hour daily limit.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {activities.map((activity, index) => (
-                        <div key={activity.id} className="group flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-                          <div 
-                            className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-                            style={{ backgroundColor: activity.color || '#3B82F6' }}
-                          >
-                            <i className={`fas ${activity.icon || getActivityIcon(activity.name)} text-white text-sm`}></i>
-                          </div>
-                          <div className="flex-1 space-y-1">
-                            <Input
-                              type="text"
-                              value={activity.name}
-                              onChange={(e) => {
-                                const newActivities = [...activities];
-                                newActivities[index].name = e.target.value;
-                                newActivities[index].icon = getActivityIcon(e.target.value);
-                                form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-                              }}
-                              placeholder="Activity name"
-                              className="border-0 bg-transparent p-0 font-medium focus-visible:ring-0 dark:text-white"
-                              data-testid={`input-activity-name-${index}`}
-                            />
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {activity.hours} {activity.hours === 1 ? 'hour' : 'hours'}, {activity.daysPerWeek} {activity.daysPerWeek === 1 ? 'day' : 'days'}/week
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="flex items-center space-x-1">
-                              <Input
-                                type="number"
-                                min="0"
-                                max="24"
-                                step="0.5"
-                                value={activity.hours}
-                                onChange={(e) => {
-                                  const newActivities = [...activities];
-                                  newActivities[index].hours = parseFloat(e.target.value) || 0;
-                                  form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-                                }}
-                                className="text-center text-sm w-16"
-                                data-testid={`input-activity-hours-${index}`}
-                              />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">hrs</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Input
-                                type="number"
-                                min="1"
-                                max="7"
-                                step="1"
-                                value={activity.daysPerWeek}
-                                onChange={(e) => {
-                                  const newActivities = [...activities];
-                                  newActivities[index].daysPerWeek = parseInt(e.target.value) || 7;
-                                  form.setValue('activities', newActivities, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-                                }}
-                                className="text-center text-sm w-14"
-                                data-testid={`input-activity-days-${index}`}
-                              />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">d/w</span>
-                            </div>
-                            {index >= 3 && (
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => removeActivity(activity.id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-8 w-8 text-muted-foreground hover:text-destructive"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <ActivityInput
+                    activities={activities}
+                    onActivitiesChange={(updated) => form.setValue('activities', updated, { shouldValidate: true, shouldDirty: true, shouldTouch: true })}
+                    minProtectedActivities={DEFAULT_ACTIVITIES.length}
+                  />
                 </div>
                 
 
@@ -2458,155 +1509,45 @@ const LifeVisualizer: React.FC = () => {
                   </div>
                   
                   {/* Interactive Life Timeline Slider */}
-                  <div className="flex flex-col">
-                    <h3 className="text-lg font-semibold mb-4">Life Timeline</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      You have approximately <span className="font-semibold text-primary">{formatNumber(visualizeResult.weeksRemaining)} weeks</span> remaining in your life.
-                    </p>
-                    
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                      {/* Timeline Visualization */}
-                      <div className="relative mb-8">
-                        {/* Life Progress Bar */}
-                        <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-                            style={{ 
-                              width: `${(visualizeResult.weeksLived / visualizeResult.weeksTotal) * 100}%`
-                            }}
-                          ></div>
-                          
-                          {/* Future Projection Marker (only visible when slider is used) */}
-                          {timelineSliderValue > 0 && (
-                            <div 
-                              className="absolute top-0 h-4 w-1 bg-yellow-400 shadow-sm"
-                              style={{ 
-                                left: `${((visualizeResult.weeksLived + timelineSliderValue) / visualizeResult.weeksTotal) * 100}%`,
-                                transform: 'translateX(-50%)'
-                              }}
-                            ></div>
-                          )}
-                        </div>
-                        
-                        {/* Key Milestones */}
-                        <div className="flex justify-between mt-2">
-                          <div className="flex flex-col items-center">
-                            <div className="h-3 w-1 bg-gray-400 dark:bg-gray-500"></div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Birth</span>
-                          </div>
-                          
-                          <div 
-                            className="flex flex-col items-center"
-                            style={{ 
-                              position: 'absolute',
-                              left: `${(visualizeResult.weeksLived / visualizeResult.weeksTotal) * 100}%`,
-                              transform: 'translateX(-50%)'
-                            }}
-                          >
-                            <div className="h-4 w-2 bg-blue-600 -mt-4 z-10 rounded-sm"></div>
-                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400 mt-1">Now ({visualizeResult.age.toFixed(1)} yrs)</span>
-                          </div>
-                          
-                          {/* Projected future age milestone (only visible when slider is used) */}
-                          {timelineSliderValue > 0 && projectedAge !== null && (
-                            <div 
-                              className="flex flex-col items-center"
-                              style={{ 
-                                position: 'absolute',
-                                left: `${((visualizeResult.weeksLived + timelineSliderValue) / visualizeResult.weeksTotal) * 100}%`,
-                                transform: 'translateX(-50%)'
-                              }}
-                            >
-                              <div className="h-3 w-2 bg-yellow-400 -mt-3 z-10 rounded-sm"></div>
-                              <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400 mt-1">Age {projectedAge.toFixed(1)}</span>
-                            </div>
-                          )}
-                          
-                          <div className="flex flex-col items-center">
-                            <div className="h-3 w-1 bg-gray-400 dark:bg-gray-500"></div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{visualizeResult.lifeExpectancy} years</span>
-                          </div>
-                        </div>
-                      </div>
+                  <LifeTimeline
+                    age={visualizeResult.age}
+                    lifeExpectancy={visualizeResult.lifeExpectancy}
+                    weeksLived={visualizeResult.weeksLived}
+                    weeksTotal={visualizeResult.weeksTotal}
+                    weeksRemaining={visualizeResult.weeksRemaining}
+                    timelineSliderValue={timelineSliderValue}
+                    projectedAge={projectedAge}
+                    projectedDaysRemaining={projectedStats?.daysRemaining ?? null}
+                    onSliderChange={(weeksAdvanced) => {
+                      setTimelineSliderValue(weeksAdvanced);
                       
-                      {/* Interactive Slider */}
-                      <div className="mt-8">
-                        <div className="relative border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-lg p-3 sm:p-4 mb-4 bg-blue-50/50 dark:bg-blue-900/20">
-                          <div className="absolute -top-3 left-4 bg-white dark:bg-gray-900 px-2">
-                            <span className="text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1 sm:gap-2">
-                              <Hourglass className="w-3 h-3 sm:w-4 sm:h-4" />
-                              Interactive Timeline
-                            </span>
-                          </div>
-                          <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 font-medium">
-                            Explore how time continues to pass:
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2 sm:space-x-4">
-                          <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Today</span>
-                          <Slider 
-                            defaultValue={[0]}
-                            max={visualizeResult.weeksRemaining}
-                            step={52} // Approximately 1 year
-                            className="flex-grow touch-none" // Improved touch handling
-                            onValueChange={(value) => {
-                              const weeksAdvanced = value[0];
-                              setTimelineSliderValue(weeksAdvanced);
-                              
-                              // Reset projected data if slider is at 0
-                              if (weeksAdvanced === 0) {
-                                setProjectedAge(null);
-                                setProjectedStats(null);
-                                
-                                // Reset charts to initial state when slider is at 0
-                                if (visualizeResult) {
-                                  updatePieChart(visualizeResult.activityStats);
-                                  updateProjectionChart(visualizeResult.futureProjections);
-                                }
-                              } else {
-                                const yearsAdvanced = weeksAdvanced / 52;
-                                const projectedAgeValue = visualizeResult.age + yearsAdvanced;
-                                setProjectedAge(projectedAgeValue);
-                                
-                                // Calculate and set the projected stats
-                                const birthdate = new Date(form.getValues('birthdate'));
-                                const formData = form.getValues();
-                                const expectancy = visualizeResult.lifeExpectancy;
-                                
-                                const stats = calculateProjectedStats(
-                                  formData,
-                                  birthdate,
-                                  visualizeResult.age,
-                                  expectancy,
-                                  weeksAdvanced
-                                );
-                                
-                                setProjectedStats(stats);
-                              }
-                            }}
-                          />
-                          <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Life Expectancy</span>
-                        </div>
-                        <div className="mt-4 text-center space-y-2">
-                          {projectedAge !== null && timelineSliderValue > 0 ? (
-                            <div className="py-2 px-3 sm:px-4 bg-blue-50 dark:bg-blue-900/20 rounded-md inline-block border border-blue-200 dark:border-blue-800 transition-all duration-300">
-                              <span className="text-xs sm:text-sm">
-                                At age <span className="font-bold text-primary">{projectedAge.toFixed(1)}</span>, you'll have
-                                <span className="font-bold text-primary ml-1">
-                                  {projectedStats ? projectedStats.daysRemaining.toFixed(0) : ((visualizeResult.lifeExpectancy - projectedAge) * 365).toFixed(0)} days
-                                </span> remaining
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="py-2 px-3 sm:px-4 bg-primary/10 dark:bg-primary/20 rounded-md inline-block transition-all duration-300">
-                              <span className="text-base sm:text-lg font-bold">{((visualizeResult.lifeExpectancy - visualizeResult.age) * 365).toFixed(0)}</span>
-                              <span className="ml-1 text-xs sm:text-sm text-primary font-medium">days remaining</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                      if (weeksAdvanced === 0) {
+                        setProjectedAge(null);
+                        setProjectedStats(null);
+                        if (visualizeResult) {
+                          updatePieChart(visualizeResult.activityStats);
+                          updateProjectionChart(visualizeResult.futureProjections);
+                        }
+                      } else {
+                        const yearsAdvanced = weeksAdvanced / 52;
+                        const projectedAgeValue = visualizeResult.age + yearsAdvanced;
+                        setProjectedAge(projectedAgeValue);
+                        
+                        const birthdateValue = new Date(form.getValues('birthdate'));
+                        const formData = form.getValues();
+                        const expectancy = visualizeResult.lifeExpectancy;
+                        
+                        const stats = calculateProjectedStats(
+                          formData,
+                          birthdateValue,
+                          visualizeResult.age,
+                          expectancy,
+                          weeksAdvanced
+                        );
+                        setProjectedStats(stats);
+                      }
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -2781,54 +1722,7 @@ const LifeVisualizer: React.FC = () => {
                       </CardHeader>
                       <CardContent>
                         {selectedAnalyticsTab === 'trends' && (
-                          <div className="space-y-6">
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                              See how small daily changes compound over your lifetime. Each hour adjustment shows the total impact over your remaining years.
-                            </div>
-                            {analyticsData.trendAnalysis.map((item, index) => (
-                              <div key={index} className="border rounded-lg p-4 space-y-4">
-                                <div className="flex items-center gap-3">
-                                  <div 
-                                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                                    style={{ backgroundColor: item.color }}
-                                  >
-                                    <i className={`fas ${item.icon} text-white text-sm`}></i>
-                                  </div>
-                                  <h3 className="text-lg font-semibold">{item.activity}</h3>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    Currently {item.currentHours}h/day
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                  {item.trends.map((trend: any, trendIndex: number) => (
-                                    <div 
-                                      key={trendIndex} 
-                                      className={`p-3 rounded-md border ${
-                                        trend.change > 0 
-                                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                                          : trend.change < 0
-                                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                                          : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                                      }`}
-                                    >
-                                      <div className="text-xs font-medium mb-1">
-                                        {trend.change > 0 ? '+' : ''}{trend.change}h/day
-                                      </div>
-                                      <div className="text-sm font-semibold">
-                                        {trend.analysis.compoundEffect > 0 ? '+' : ''}
-                                        {trend.analysis.compoundEffect.toFixed(1)} years over lifetime
-                                      </div>
-                                      {trend.analysis.recommendations.length > 0 && (
-                                        <div className="text-xs mt-2 opacity-75">
-                                          {trend.analysis.recommendations[0]}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <TrendAnalysis trendData={analyticsData.trendAnalysis} />
                         )}
 
                         {selectedAnalyticsTab === 'cost-benefit' && (

@@ -422,22 +422,38 @@ export const calculateTrendAnalysis = (
   ageRange: { start: number; end: number },
   currentAge: number
 ): TrendAnalysisResult => {
-  const yearsInPeriod = ageRange.end - ageRange.start;
+  // Guard: Normalize age range and calculate safe horizon
+  const safeStart = Math.max(ageRange.start, currentAge);
+  const safeEnd = Math.max(safeStart, ageRange.end);
+  const horizonYears = safeEnd - safeStart;
+  
+  // Bail out with neutral defaults if horizon is invalid
+  if (horizonYears <= 0 || !Number.isFinite(horizonYears)) {
+    return {
+      originalYears: 0,
+      modifiedYears: 0,
+      compoundEffect: 0,
+      yearlyImpact: 0,
+      recommendations: [],
+      compoundingFactors: { healthMultiplier: 1, skillMultiplier: 1, totalBenefit: 1 }
+    };
+  }
+  
   const activityLower = currentActivity.name.toLowerCase();
   
   const originalHoursPerYear = currentActivity.hours * 365;
   const modifiedHoursPerYear = Math.max(0, currentActivity.hours + changeInHours) * 365;
   
-  const baseOriginalYears = (originalHoursPerYear * yearsInPeriod) / (365 * 24);
-  const baseModifiedYears = (modifiedHoursPerYear * yearsInPeriod) / (365 * 24);
+  const baseOriginalYears = (originalHoursPerYear * horizonYears) / (365 * 24);
+  const baseModifiedYears = (modifiedHoursPerYear * horizonYears) / (365 * 24);
   
-  const compoundingFactors = calculateCompoundingFactors(activityLower, changeInHours, currentAge, yearsInPeriod, currentActivity.hours);
+  const compoundingFactors = calculateCompoundingFactors(activityLower, changeInHours, currentAge, horizonYears, currentActivity.hours);
   
   const originalYears = baseOriginalYears;
   const modifiedYears = baseModifiedYears * compoundingFactors.totalBenefit;
   
   const compoundEffect = modifiedYears - originalYears;
-  const yearlyImpact = compoundEffect / yearsInPeriod;
+  const yearlyImpact = horizonYears > 0 ? compoundEffect / horizonYears : 0;
   
   const recommendations = generateTrendRecommendations(currentActivity.name, changeInHours, compoundEffect, compoundingFactors, currentActivity.hours);
   
@@ -544,7 +560,31 @@ export const calculateCostBenefitAnalysis = (
   userAge: number,
   lifeExpectancy: number
 ): CostBenefitResult => {
-  const remainingYears = lifeExpectancy - userAge;
+  // Guard: Clamp remaining years to prevent negative horizons
+  const remainingYears = Math.max(0, lifeExpectancy - userAge);
+  
+  // Bail out with neutral defaults if no valid horizon or hours
+  if (remainingYears === 0 || hoursToReallocate <= 0) {
+    return {
+      opportunityCost: {
+        activity: fromActivity.name,
+        yearsLost: 0,
+        qualitativeImpact: 'No remaining horizon to evaluate'
+      },
+      benefit: {
+        activity: toActivity.name,
+        yearsGained: 0,
+        qualitativeImpact: 'No remaining horizon to evaluate',
+        potentialROI: 'N/A'
+      },
+      netImpact: {
+        timeValue: 0,
+        recommendation: 'Neutral: No remaining horizon to evaluate.',
+        confidence: 'low' as const
+      }
+    };
+  }
+  
   const yearsLost = (hoursToReallocate * 365 * remainingYears) / (365 * 24);
   const yearsGained = yearsLost;
   
@@ -662,13 +702,16 @@ export const generatePhaseRecommendations = (currentAge: number, lifeExpectancy:
 };
 
 export const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: number): TransitionPlanning => {
+  // Guard: Use safe expectancy (at least equal to current age)
+  const safeExpectancy = Math.max(currentAge, lifeExpectancy);
+  
   let nextPhase = '';
   let timeToTransition = 0;
   let preparationSteps: string[] = [];
   
   if (currentAge < 25) {
     nextPhase = 'Career Establishment';
-    timeToTransition = 25 - currentAge;
+    timeToTransition = Math.max(0, 25 - currentAge);
     preparationSteps = [
       'Complete education and certifications',
       'Build professional network',
@@ -677,7 +720,7 @@ export const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: 
     ];
   } else if (currentAge < 35) {
     nextPhase = 'Growth & Family';
-    timeToTransition = 35 - currentAge;
+    timeToTransition = Math.max(0, 35 - currentAge);
     preparationSteps = [
       'Achieve financial stability',
       'Develop leadership skills',
@@ -686,7 +729,7 @@ export const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: 
     ];
   } else if (currentAge < 45) {
     nextPhase = 'Peak Performance';
-    timeToTransition = 45 - currentAge;
+    timeToTransition = Math.max(0, 45 - currentAge);
     preparationSteps = [
       'Develop expertise and specialization',
       'Build wealth and assets',
@@ -695,7 +738,7 @@ export const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: 
     ];
   } else if (currentAge < 55) {
     nextPhase = 'Transition Planning';
-    timeToTransition = 55 - currentAge;
+    timeToTransition = Math.max(0, 55 - currentAge);
     preparationSteps = [
       'Maximize earning potential',
       'Develop leadership and mentoring skills',
@@ -704,7 +747,7 @@ export const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: 
     ];
   } else if (currentAge < 65) {
     nextPhase = 'Legacy & Fulfillment';
-    timeToTransition = 65 - currentAge;
+    timeToTransition = Math.max(0, 65 - currentAge);
     preparationSteps = [
       'Plan retirement finances',
       'Develop post-career interests',
@@ -713,7 +756,7 @@ export const calculateTransitionPlanning = (currentAge: number, lifeExpectancy: 
     ];
   } else {
     nextPhase = 'Continued Fulfillment';
-    timeToTransition = lifeExpectancy - currentAge;
+    timeToTransition = Math.max(0, safeExpectancy - currentAge);
     preparationSteps = [
       'Maintain physical and mental health',
       'Stay engaged with community',
@@ -730,9 +773,12 @@ export const calculateLifePhaseOptimization = (
   activities: ActivityData[],
   lifeExpectancy: number
 ): LifePhaseResult => {
+  // Guard: Use safe expectancy (at least equal to current age)
+  const safeExpectancy = Math.max(currentAge, lifeExpectancy);
+  
   const currentPhase = determineLifePhase(currentAge);
-  const recommendations = generatePhaseRecommendations(currentAge, lifeExpectancy);
-  const transitionPlanning = calculateTransitionPlanning(currentAge, lifeExpectancy);
+  const recommendations = generatePhaseRecommendations(currentAge, safeExpectancy);
+  const transitionPlanning = calculateTransitionPlanning(currentAge, safeExpectancy);
   
   return { currentPhase, recommendations, transitionPlanning };
 };
