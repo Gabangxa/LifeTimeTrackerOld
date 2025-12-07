@@ -63,6 +63,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { SEO } from '@/components/SEO';
 import { fetchCountries, fetchLifeExpectancy } from '@/services/WorldBankApi';
 import { 
   CountryInfo, 
@@ -1133,24 +1134,8 @@ const generateDynamicComparisons = (activityName: string, years: number): Array<
   }));
 };
 
-// SEO optimization function to set metadata dynamically
-const updatePageMetadata = () => {
-  // Update document title for better SEO
-  document.title = "Lifetime Visualizer - Understand How You Spend Your Life | Time Management Tool";
-  
-  // Dynamically update meta description for this specific page
-  const pageMetaDescription = document.querySelector('meta[name="description"]');
-  if (pageMetaDescription) {
-    pageMetaDescription.setAttribute('content', 
-      'Visualize how you spend your time across your entire lifespan with our interactive life visualization tool. Track activities, see personalized projections, and optimize your life for better productivity and fulfillment.');
-  }
-};
 
 const LifeVisualizer: React.FC = () => {
-  // Update metadata when component mounts
-  useEffect(() => {
-    updatePageMetadata();
-  }, []);
 
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [countries, setCountries] = useState<CountryInfo[]>([]);
@@ -1925,6 +1910,13 @@ const LifeVisualizer: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+      <SEO 
+        title="Lifetime Visualizer - Understand How You Spend Your Life | Time Management Tool"
+        description="Visualize how you spend your time across your entire lifespan with our interactive life visualization tool. Track activities, see personalized projections, and optimize your life for better productivity and fulfillment."
+        keywords="life visualization, time management, productivity, life expectancy, activity tracker, time allocation"
+        ogTitle="Lifetime Visualizer - See Your Life in Perspective"
+        ogDescription="Interactive tool to visualize your lifetime activities and make the most of your time."
+      />
       {/* Floating Navigation */}
       {visualizeResult && (
         <div className="fixed bottom-6 right-6 z-50">
